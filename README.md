@@ -19,3 +19,5 @@ I know, the code isn't pretty, but it works.
 Requires TamperMonkey, ViolentMonkey, or GreaseMonkey.
 
 Feel free to DM me with any bugs or feature ideas https://x.com/maejok
+
+https://greasyfork.org/en/scripts/465416-maejok-tools-for-fishtank-live
