@@ -472,7 +472,7 @@
                     if (config.get('enableDenseChat')) {
                         let usernameColor = null;
                         let nameMargin = '';
-                        const denseCSS = 'padding: 0px;!important; flex-direction: initial;'
+                        const denseCSS = 'padding: 0px!important; flex-direction: initial;'
                         const chatMessages = document.querySelector(`.${elms.chatMessages}`);
                         const chatMessageOuter = document.querySelector(`.${elms.chatMessageOuter}`);
                         const chatTimestamps = addedNode.querySelector(`.${elms.chatTimestamps}`);
