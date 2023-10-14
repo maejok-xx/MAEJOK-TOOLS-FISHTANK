@@ -2,7 +2,7 @@
 // @name         MAEJOK-TOOLS for Fishtank.live
 // @description  Tools for Fishtank.live Season 2!
 // @author       maejok-xx
-// @version      2.4.1
+// @version      2.4.2
 // @license      GNU GPLv3
 // @homepageURL  https://github.com/maejok-xx/MAEJOK-TOOLS-FISHTANK
 // @namespace    https://greasyfork.org/en/scripts/465416-maejok-tools-for-fishtank-live
@@ -14,7 +14,7 @@
 
 (function () {
     'use strict';
-    const VERSION = '2.4.1';
+    const VERSION = '2.4.2';
 
     // ---- CONFIG ----
     const elms = {
@@ -730,7 +730,7 @@
 
         let chatterDisplayNameElement = null
         let chatterDisplayName = null
-        if (event.target.parentElement.className == elms.chatAvatar && config.get('enableAvatarTagging')) {
+        if (event.target.parentElement.className.includes(elms.chatAvatar) && config.get('enableAvatarTagging')) {
           const chatAvatar = event.target.parentElement
           chatterDisplayNameElement = chatAvatar.parentElement
           chatterDisplayName = chatterDisplayNameElement.querySelector(`[class*="${elms.chatUsername}"]`).innerHTML
@@ -756,7 +756,7 @@
       }
 
       // SCROLL TO BOTTOM
-      if (event.target.className == elms.chatAutoScroll) {
+      if (event.target.className.includes(elms.chatAutoScroll)) {
         const chatMessageList = document.querySelector(`[class*="${elms.chatMessageList}"]`);
         chatMessageList.scrollTop = chatMessageList.scrollHeight;
       }
