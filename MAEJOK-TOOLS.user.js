@@ -2,7 +2,7 @@
 // @name         MAEJOK-TOOLS for Fishtank.live
 // @description  Tools for Fishtank.live Season 2!
 // @author       maejok-xx
-// @version      2.4.0
+// @version      2.4.1
 // @license      GNU GPLv3
 // @homepageURL  https://github.com/maejok-xx/MAEJOK-TOOLS-FISHTANK
 // @namespace    https://greasyfork.org/en/scripts/465416-maejok-tools-for-fishtank-live
@@ -14,7 +14,7 @@
 
 (function () {
     'use strict';
-    const VERSION = '2.4.0';
+    const VERSION = '2.4.1';
 
     // ---- CONFIG ----
     const elms = {
@@ -726,7 +726,7 @@
 
     document.addEventListener('click', (event) => {
       if (!config.get('enableNameTagging')) return
-      if (event.target.className == elms.chatUsername || event.target.className == elms.userCardUsername || event.target.parentElement.className == elms.chatAvatar) {
+      if (event.target.className.includes(elms.chatUsername) || event.target.className.includes(elms.userCardUsername) || event.target.parentElement.className.includes(elms.chatAvatar)) {
 
         let chatterDisplayNameElement = null
         let chatterDisplayName = null
