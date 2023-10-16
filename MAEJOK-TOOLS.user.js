@@ -597,7 +597,6 @@
     const chatHeader = document.querySelector(`.maejok-chatter_count`);
     const chatUserList = document.createElement('div');
     chatUserList.classList.add(`maejok-chatter_count-chatters`);
-    console.log(event);
     chatUserList.style.top = `${event.clientY}px`;
     chatUserList.style.left = `${event.clientX}px`;
 
@@ -1025,7 +1024,6 @@
           let systemMessage = addedNode.querySelector(`[class*="${classes.chatSystem}"] div`);
           if (systemMessage) {
             const msg = systemMessage.textContent;
-            console.log(msg.includes('Joined '));
             if (msg.includes('Joined ')) updateChattersList(my.name, chattersList, true);
           }
           // end clear chatters
