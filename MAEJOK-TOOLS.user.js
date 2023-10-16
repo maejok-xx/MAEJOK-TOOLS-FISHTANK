@@ -1029,7 +1029,7 @@
 
   function insertChangelog() {
       sessionStorage.removeItem('maejok-showChangelog');
-      insertChatMessage(`<div id="maejok-changelog" style="animation:notice-me.3s 7;margin:4px;cursor:pointer;margin-top:10px;text-align:center;padding:10px"><h2 style="font-size:1.2rem;margin:0;color:#f07">MAEJOK-TOOLS</h2><p style="font-size:1rem;color:#fff"><b>Has been updated to v${VERSION}!</b></p><div style="text-align:center;margin:5px 0 5px;font-size:.8rem;color:#fff">[ <a class="maejok-update" href="https://github.com/maejok-xx/MAEJOK-TOOLS-FISHTANK/blob/main/changelogs/${VERSION}.md" target="_blank">view change log</a> - <a class="maejok-update" href="#" onclick="event.preventDefault();document.getElementById('maejok-changelog').remove();">dismiss</a> ]</div></div>`);
+      insertChatMessage(`<div id="maejok-changelog" style="animation:notice-me.3s 7;margin:4px;cursor:pointer;margin-top:10px;text-align:center;padding:10px"><h2 style="font-size:1.2rem;margin:0;color:#f07">MAEJOK-TOOLS</h2><p style="font-size:1rem;color:#fff"><b>Has been updated to v${VERSION}!</b></p><p style="font-size:.7rem;color:#fff">Refresh to start using it</p><div style="text-align:center;margin:5px 0 5px;font-size:.8rem;color:#fff">[ <a class="maejok-update" href="https://github.com/maejok-xx/MAEJOK-TOOLS-FISHTANK/blob/main/changelogs/${VERSION}.md" target="_blank">view change log</a> - <a class="maejok-update" href="#" onclick="event.preventDefault();document.getElementById('maejok-changelog').remove();">dismiss</a> ]</div></div>`);
   }
 
   // OBSERVERS
