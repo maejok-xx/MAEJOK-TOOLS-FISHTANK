@@ -7,7 +7,7 @@ Current Features:
 - "Friending" (highlight select people with green in chat by visiting their profile)
 - Double-Click Messages in chat to toggle highlighting of all messages from that user (persistent between refreshes)
 - Enter Clan Chat Automatically
-- Active Chatters Count
+- Active Chatters Count/List (click count)
 - Dense Chat mode
 - Click Avatars/Usernames to tag users
 - Quick Scroll to bottom (click "Auto-scroll off")
