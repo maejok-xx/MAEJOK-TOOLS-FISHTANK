@@ -2,33 +2,43 @@
 // @name         MAEJOK-TOOLS for Fishtank.live
 // @description  Tools for Fishtank.live Season 2!
 // @author       maejok-xx
-// @version      2.4.3
+// @version      2.4.4
 // @license      GNU GPLv3
 // @homepageURL  https://github.com/maejok-xx/MAEJOK-TOOLS-FISHTANK
 // @namespace    https://greasyfork.org/en/scripts/465416-maejok-tools-for-fishtank-live
 // @icon         https://www.google.com/s2/favicons?domain=fishtank.live
 // @match        *://*.fishtank.live/*
-// @run-at       document-end
+// @run-at       document-start
 // @grant        GM_addStyle
 // ==/UserScript==
 
+
+
+// TO RESET ALL PLUGIN DATA: Clear browser's LocalStorage for https://www.fishtank.live
+
+
+
 (function () {
   'use strict';
-  const VERSION = '2.4.3';
+  const VERSION = '2.4.4';
 
   // DON'T EDIT THESE!!
-  let isPageLoaded = false;
-  let chattersList = [];
-  let isBigChat = false;
-  let chatMutationObserver = null;
   const classes = {
     mainHome: 'home_home',
+    // top bar
+    topBar: 'top-bar_top-bar',
+    topBarUser: 'top-bar_user',
+    topBarTitle: 'top-bar_title',
+    topBarLogo: 'top-bar_logo',
+    topBarClan: 'top-bar_clan',
+    topBarDisplayName: 'top-bar_display-name',
     // chat
     chatHeader: 'chat_header',
     chatPresence: 'chat_presence',
     // chat box
     chatBox: 'chat_chat__2rdNg',
     // chat messages
+    chatRoomSelector: 'chat-room-selector_chat-room-selector',
     chatRoomsList: 'select_options',
     chatMessages: 'chat_messages',
     chatMessageList: 'chat_inner',
@@ -53,12 +63,6 @@
     chatInputActions: 'chat-input_actions__V_ho0',
     chatInputForm: 'chat-input_chat-input__OmyQV',
         chatInput: 'chat-input_input__ozkas',
-    // top bar
-    topBar: 'top-bar_top-bar',
-    topBarUser: 'top-bar_user',
-    topBarTitle: 'top-bar_title',
-    topBarLogo: 'top-bar_logo',
-    topBarClan: 'top-bar_clan',
     // modal
     modalBackdrop: 'modal_backdrop__94Bu6',
     modalContainer: 'modal_modal-container__iQODa',
@@ -79,6 +83,8 @@
     // maejok elements:
     chatterCount: 'maejok-chatter_count-count',
 
+    mobileNavPanel: 'mobile-nav-panel_mobile',
+
     add: {
       chatPresence: 'chat_presence__90XuO',
       chatCount: 'chat_count__D7xic',
@@ -86,13 +92,11 @@
     }
   };
 
-  // CODE
-
-  // DOM CREATION
+  // ELEMENT CREATION
   function createSettingsPanel() {
     if (!isPageLoaded || document.querySelector(`.${classes.modalContainer}`)) return;
 
-    isBigChat ? toggleBigChat() : playSound('clicklow');
+    isBigChat ? toggleBigChat() : playSound('click-low-short');
 
     config.load();
 
@@ -195,54 +199,58 @@
 
     form.addEventListener('submit', (event) => { event.preventDefault(); saveConfig(); });
 
-    const enableRecentChatters = createCheckbox('Enable Chatter Count', 'enableRecentChatters', ['Threshold', 'How long should someone be considered active in chat? (in minutes) (Default: 10)', [config.get('chattersThreshold'), 'min.', 'chattersThreshold']]);
+    const enableRecentChatters = createCheckbox('Enable Chatter Count', 'enableRecentChatters', ['prompt', 'Threshold', 'How long should someone be considered active in chat? (in minutes) (Default: 10)', 'chattersThreshold', 'min.']);
     form.appendChild(enableRecentChatters);
 
-    const enableBigChat = createCheckbox('Big Chat Mode (Hit CTRL+` or CTRL+SHIFT+SPACE to toggle)', 'enableBigChat');
+    const enableBigChat = createCheckbox('Big Chat Mode', 'enableBigChat', ['help', ' ? ', 'Hit CTRL+` or CTRL+SHIFT+SPACE to toggle']);
     form.appendChild(enableBigChat);
 
-    const hideTimerBigChat = createCheckbox('Hide Countdown in Big Chat Mode', 'hideTimerBigChat');
-    form.appendChild(hideTimerBigChat);
+    const persistBigChat = createCheckbox('Persist Big Chat State', 'persistBigChat', ['help', ' ? ', 'Remembers which state Big Chat was in last time you left the site and returns to that state on page load']);
+    form.appendChild(persistBigChat);
 
-    const enableClickHighlightUsers = createCheckbox('Double-Click Message to Highlight All Users Messages', 'enableClickHighlightUsers');
+    const showTimerBigChat = createCheckbox('Show Countdown in Big Chat Mode', 'showTimerBigChat', ['help', ' ? ', 'Hides or shows the countdown timer when Big Chat is enabled']);
+    form.appendChild(showTimerBigChat);
+
+    const enableClickHighlightUsers = createCheckbox('Enable Users Highlighting', 'enableClickHighlightUsers', ['help', ' ? ', 'Highlights all messages by user.  Will persist between page reloads.']);
     form.appendChild(enableClickHighlightUsers);
 
-    const enableAvatarTagging = createCheckbox('Avatar Click-To-Tag (chat)', 'enableAvatarTagging');
+    const enableAvatarTagging = createCheckbox('Avatar Click-To-Tag', 'enableAvatarTagging', ['help', ' ? ', 'Tags chat sender when you click their username']);
     form.appendChild(enableAvatarTagging);
 
-    const enableNameTagging = createCheckbox('Username Click-To-Tag (chat)', 'enableNameTagging');
+    const enableNameTagging = createCheckbox('Username Click-To-Tag', 'enableNameTagging', ['help', ' ? ', 'Tags chat sender when you click their avatar']);
     form.appendChild(enableNameTagging);
 
-    const enableDenseChat = createCheckbox('Enable Dense Chat', 'enableDenseChat');
+    const enableDenseChat = createCheckbox('Enable Dense Chat', 'enableDenseChat', ['help', ' ? ', 'Removes padding around chat messages']);
     form.appendChild(enableDenseChat);
 
-    const autoClanChat = createCheckbox('Auto-Join Clan Chat', 'autoClanChat');
+    const autoClanChat = createCheckbox('Auto-Join Clan Chat', 'autoClanChat', ['help', ' ? ', 'Automatically joins your clan\'s chat upon page load']);
     form.appendChild(autoClanChat);
 
-    const disableTimestamps = createCheckbox('Hide Timestamps (chat)', 'disableTimestamps');
+    const disableTimestamps = createCheckbox('Hide Timestamps', 'disableTimestamps', ['help', ' ? ', 'Hides timestamps in chat']);
     form.appendChild(disableTimestamps);
 
-    const disableChatClans = createCheckbox('Hide Clans (chat)', 'disableChatClans');
+    const disableChatClans = createCheckbox('Hide Clans', 'disableChatClans', ['help', ' ? ', 'Hides chatters clans tags in chat']);
     form.appendChild(disableChatClans);
 
-    const disableLevels = createCheckbox('Hide Levels (chat)', 'disableLevels');
+    const disableLevels = createCheckbox('Hide Levels', 'disableLevels', ['help', ' ? ', 'Hides chatters levels in chat']);
     form.appendChild(disableLevels);
 
-    const disableAvatars = createCheckbox('Hide Avatars (chat)', 'disableAvatars');
+    const disableAvatars = createCheckbox('Hide Avatars', 'disableAvatars', ['help', ' ? ', 'Hides chatters avatars in chat']);
     form.appendChild(disableAvatars);
-    const disableEmotes = createCheckbox('Hide Emotes (chat)', 'disableEmotes');
+
+    const disableEmotes = createCheckbox('Hide Emotes', 'disableEmotes', ['help', ' ? ', 'Hides all emotes in chat']);
     form.appendChild(disableEmotes);
 
-    const disableHappenings = createCheckbox('Hide Happenings (chat)', 'disableHappenings');
-    form.appendChild(disableHappenings);
-
-    const disableMedals = createCheckbox('Hide Medals (chat)', 'disableMedals');
+    const disableMedals = createCheckbox('Hide Medals', 'disableMedals', ['help', ' ? ', 'Hides all medals in chat.  If only medals are sent, the entire message is hidden']);
     form.appendChild(disableMedals);
 
-    const disableSystemMessages = createCheckbox('Hide System Messages (chat) (join/clan notices, War Toys, etc)', 'disableSystemMessages');
+    const disableHappenings = createCheckbox('Hide Happenings', 'disableHappenings', ['help', ' ? ', 'Hides all notices for consumables (inventory items) notices in chat']);
+    form.appendChild(disableHappenings);
+
+    const disableSystemMessages = createCheckbox('Hide System Messages', 'disableSystemMessages', ['help', ' ? ', 'Hides all room joins, clan/clanless attacks, War Toys, etc. from chat']);
     form.appendChild(disableSystemMessages);
 
-    const enableUpdateChecks = createCheckbox('Notify when an update is available?', 'enableUpdateChecks');
+    const enableUpdateChecks = createCheckbox('Allow plugin to check for updates', 'enableUpdateChecks', ['prompt', 'Frequency', 'How many minutes between update checks? (in minutes) (Default: 30) Note: This will also enable update checks on every page load.', 'updateCheckFrequency', 'min.']);
     form.appendChild(enableUpdateChecks);
 
     // save button
@@ -300,45 +308,90 @@
     inputElement.id = elmId;
 
     if (prompt) {
-      const hiddenElmId = `maejok-${prompt[2][2]}`
-      const promptSpan = document.createElement('span');
-      promptSpan.style.color = '#000';
-      promptSpan.style.fontWeight = '600';
+      const type = prompt[0];
+      if (type === 'help') {
+        const linkText = prompt[1];
+        const alertText = prompt[2];
 
-      const promptSpanText = document.createElement('a');
-      promptSpanText.style.fontWeight = '600';
-      promptSpanText.style.fontSize = '14px';
-      promptSpanText.style.color = 'darkBlue';
-      promptSpanText.style.textDecoration = 'none';
-      promptSpanText.textContent = prompt[0]
+        const helpSpan = document.createElement('span');
+        helpSpan.style.color = '#000';
+        helpSpan.style.fontWeight = '600';
+        helpSpan.style.cursor = "pointer";
 
-      const openBracket = document.createTextNode('[');
-      const currentValue = document.createTextNode(` (${prompt[2][0]}${[prompt[2][1]]})`);
-      const closeBracket = document.createTextNode(']');
+        const helpSpanText = document.createElement('a');
+        helpSpanText.style.fontWeight = '600';
+        helpSpanText.style.fontSize = '14px';
+        helpSpanText.style.color = 'darkBlue';
+        helpSpanText.style.textDecoration = 'none';
+        helpSpanText.textContent = linkText;
+        helpSpanText.href = '#'
 
-      const promptInput = document.createElement('input');
-      promptInput.id = hiddenElmId;
-      promptInput.type = 'hidden';
-      promptInput.value = prompt[2][0]
+        const openBracket = document.createTextNode('[');
+        const closeBracket = document.createTextNode(']');
 
-      promptSpan.appendChild(openBracket);
-      promptSpan.appendChild(promptSpanText);
-      promptSpan.appendChild(currentValue);
-      promptSpan.appendChild(closeBracket);
-      promptSpan.appendChild(promptInput);
 
-      promptSpanText.href = '#';
-      promptSpanText.onclick = () => {
-        const promptInput = getUserInput(prompt[1]) || false;
-        const input = isNumeric(promptInput) ? promptInput : prompt[2][0];
-        if (!input) return;
-        config.set(id, input);
-        currentValue.textContent = ` (${input}${[prompt[2][1]]})`;
+        helpSpan.appendChild(openBracket);
+        helpSpan.appendChild(helpSpanText);
+        helpSpan.appendChild(closeBracket);
 
-        document.getElementById(hiddenElmId).value = input;
-      };
+        helpSpanText.onclick = (event) => {
+          event.preventDefault();
+          alert(alertText);
+        }
 
-      inputLabel.appendChild(promptSpan);
+        inputLabel.appendChild(helpSpan);
+
+      }
+
+      if (type === 'prompt'){
+        const linkText = prompt[1];
+        const promptText = prompt[2];
+        const configKey = prompt[3];
+        const labelDescriptor = prompt[4];
+        const configValue = config.get(configKey);
+
+        const hiddenElmId = `maejok-${configKey}`
+        const promptSpan = document.createElement('span');
+        promptSpan.style.color = '#000';
+        promptSpan.style.fontWeight = '600';
+        promptSpan.style.cursor = "pointer";
+
+        const promptSpanText = document.createElement('a');
+        promptSpanText.style.fontWeight = '600';
+        promptSpanText.style.fontSize = '14px';
+        promptSpanText.style.color = 'darkBlue';
+        promptSpanText.style.textDecoration = 'none';
+        promptSpanText.textContent = linkText;
+        promptSpanText.href = '#'
+
+        const openBracket = document.createTextNode('[');
+        const currentValue = document.createTextNode(` (${configValue}${[labelDescriptor]})`);
+        const closeBracket = document.createTextNode(']');
+
+        const promptInput = document.createElement('input');
+        promptInput.id = hiddenElmId;
+        promptInput.type = 'hidden';
+        promptInput.value = config.get(configKey)
+
+        promptSpan.appendChild(openBracket);
+        promptSpan.appendChild(promptSpanText);
+        promptSpan.appendChild(currentValue);
+        promptSpan.appendChild(closeBracket);
+        promptSpan.appendChild(promptInput);
+
+        promptSpanText.onclick = (event) => {
+          event.preventDefault();
+          const promptInput = getUserInput(promptText) || false;
+          const input = isNumeric(promptInput) ? promptInput : configValue;
+          if (!input) return;
+          config.set(id, input);
+          currentValue.textContent = ` (${input}${[labelDescriptor]})`;
+
+          document.getElementById(hiddenElmId).value = input;
+        }
+
+        inputLabel.appendChild(promptSpan);
+      }
     }
 
     inputLabel.appendChild(inputLabelText);
@@ -385,8 +438,14 @@
 
 
   // TOGGLES
+  let isBigChat = false;
   function toggleBigChat() {
     if (!isPageLoaded || !config.get('enableBigChat')) return;
+    isBigChat = !isBigChat;
+    if (config.get('persistBigChat')) {
+      config.set('bigChatState', isBigChat);
+      config.save()
+    }
     playSound('shutter');
     const chatBoxElement = document.querySelector(`[class*="${classes.chatBox}"]`);
     const chatMessagesElement = document.querySelector(`[class*="${classes.chatMessages}"]`);
@@ -399,41 +458,27 @@
     const topBarLogoElement = document.querySelector(`[class*="${classes.topBarLogo}"]`);
     const happeningMessageElement = document.querySelector(`[class*="${classes.happeningMessage}"]`);
     const countDownTimerElement = document.querySelector(`[class*="${classes.countDownTimer}"]`);
+    const mobileNavPanel = document.querySelector(`[class^="${classes.mobileNavPanel}"]`);
 
     if (chatBoxElement) {
-      chatBoxElement.classList.toggle('mTS2-chatBox-popOut');
-      chatMessagesElement.classList.toggle('mTS2-chatMessages-popOut');
-      chatInputFormElement.classList.toggle('mTS2-chatInput-popOut');
-      chatChatterCountElement.classList.toggle('mTS2-chatters-popOut');
-      xpBarElement.classList.toggle('mTS2-xpBar-popOut');
-      topBarElement.classList.toggle('mTS2-topBar-popOut');
-      topBarUserElement.classList.toggle('mTS2-topBarUser-popOut');
-      topBarTitleElement.classList.toggle('mTS2-topBarTitle-popOut');
-      topBarLogoElement.classList.toggle('mTS2-topBarLogo-popOut');
-      if (config.get('hideTimerBigChat')) countDownTimerElement.classList.toggle('mTS2-countdown-popOut-hide');
-      if (!config.get('hideTimerBigChat')) countDownTimerElement.classList.toggle('mTS2-countdown-popOut-show');
+      chatBoxElement.classList.toggle('mTS2-chatBox-BigChat', isBigChat);
+      chatMessagesElement.classList.toggle('mTS2-chatMessages-BigChat', isBigChat);
+      chatInputFormElement.classList.toggle('mTS2-chatInput-BigChat', isBigChat);
+      chatChatterCountElement.classList.toggle('mTS2-chatters-BigChat', isBigChat);
+      xpBarElement.classList.toggle('mTS2-xpBar-BigChat', isBigChat);
+      topBarElement.classList.toggle('mTS2-topBar-BigChat', isBigChat);
+      topBarUserElement.classList.toggle('mTS2-topBarUser-BigChat', isBigChat);
+      topBarTitleElement.classList.toggle('mTS2-topBarTitle-BigChat', isBigChat);
+      topBarLogoElement.classList.toggle('mTS2-topBarLogo-BigChat', isBigChat);
+      mobileNavPanel.classList.toggle('mTS2-mobileNavPanel-BigChat', isBigChat);
+
+      if (config.get('showTimerBigChat')) countDownTimerElement?.classList.toggle('mTS2-countdown-BigChat-show', isBigChat);
+      if (!config.get('showTimerBigChat')) countDownTimerElement?.classList.toggle('mTS2-countdown-BigChat-hide', isBigChat);
 
       if (happeningMessageElement) happeningMessageElement.style.textAlign = isBigChat ? 'unset' : 'center';
       xpBarElement.style.transition = 'margin-top 0.5s';
     }
 
-    isBigChat = !isBigChat;
-  }
-
-  function toggleUserHighlighting(user) {
-    let users = config.get('highlightedUsers');
-    const userIndex = users.indexOf(user);
-
-    if (userIndex !== -1) {
-      users.splice(userIndex, 1);
-      playSound('clickhigh');
-    } else {
-      users.push(user);
-      playSound('clicklow');
-    }
-
-    config.set('highlightedUsers', users);
-    saveConfig(false);
   }
 
   function toggleFriend(user) {
@@ -443,15 +488,31 @@
 
     if (userIndex !== -1) {
       users.splice(userIndex, 1);
-      playSound('clickhigh');
+      playSound('click-high-short');
       if (friendBtn) friendBtn.textContent = 'Add Friend';
     } else {
       users.push(user);
-      playSound('clicklow');
+      playSound('click-low-short');
       if (friendBtn) friendBtn.textContent = 'Remove Friend';
     }
 
     config.set('friends', users);
+    saveConfig(false);
+  }
+
+  function toggleUserHighlighting(user) {
+    let users = config.get('highlighted');
+    const userIndex = users.indexOf(user);
+
+    if (userIndex !== -1) {
+      users.splice(userIndex, 1);
+      playSound('click-high-short');
+    } else {
+      users.push(user);
+      playSound('click-low-short');
+    }
+
+    config.set('highlighted', users);
     saveConfig(false);
   }
 
@@ -495,24 +556,23 @@
     const autoClanChatEnabled = config.get('autoClanChat');
     if (!autoClanChatEnabled) return;
 
-    const clanButton = document.querySelector(`[class*="${classes.topBarClan}"] button`);
-    const clanName = clanButton?.innerText;
+    if (!my.clan) return;
 
-    if (!clanName) return;
-
-    const chatRoomButtons = document.querySelectorAll(`.${classes.chatRoomsList} button span`);
+    const chatRoomSelector = document.querySelector(`[class*="${classes.chatRoomSelector}"]`);
+    const chatRoomButtons = chatRoomSelector.querySelectorAll(`[class*="${classes.chatRoomsList}"] button span`);
 
     chatRoomButtons.forEach(room => {
-      if (room.innerText === clanName) room.click();
+      if (room.innerText === my.clan) room.click();
     });
   }
 
+  let chattersList = [];
   function initRecentChatters() {
     const elmName = `maejok-chatter_count`;
     const chatHeader = document.querySelector(`[class*="${classes.chatPresence}"]`);
     const chatPresence = document.createElement('div');
     chatPresence.classList.add(`${classes.add.chatPresence}`);
-    chatPresence.classList.add(`maejok-chatterCount`);
+    chatPresence.classList.add(elmName);
 
     const chattersText = document.createElement('div');
     chattersText.innerText = `Chatting`;
@@ -525,9 +585,41 @@
     chatHeader.insertAdjacentElement('afterend', chatPresence);
     chatPresence.appendChild(chattersCount);
     chatPresence.appendChild(chattersText);
+
+    chattersCount.addEventListener('mouseup', (event)=>{ showChattersList(event) });
   }
 
-  function updateChattersList(user, array) {
+  function showChattersList(event) {
+
+    const chattersListElm = document.querySelector(`.maejok-chatter_count-chatters`);
+    if (chattersListElm) chattersListElm.remove('maejok-chatter_count-chatters-show');
+
+    const chatHeader = document.querySelector(`.maejok-chatter_count`);
+    const chatUserList = document.createElement('div');
+    chatUserList.classList.add(`maejok-chatter_count-chatters`);
+    console.log(event);
+    chatUserList.style.top = `${event.clientY}px`;
+    chatUserList.style.left = `${event.clientX}px`;
+
+    document.body.appendChild(chatUserList);
+    if (chattersList.length === 0){
+      const chatterDiv = document.createElement('div');
+      chatterDiv.classList.add(`maejok-chatter_count-chatter`);
+      chatterDiv.innerText = "Ain't nobody hurr!";
+      chatUserList.appendChild(chatterDiv);
+    }else{
+      chattersList.forEach(chatter => {
+        const chatterDiv = document.createElement('div');
+        chatterDiv.classList.add(`maejok-chatter_count-chatter`);
+        chatterDiv.innerText = chatter.user;
+        chatUserList.appendChild(chatterDiv);
+      });
+    }
+    chatUserList.classList.add('maejok-chatter_count-chatters-show');
+  }
+
+  function updateChattersList(user, array, reset = false) {
+    if (reset) array = [];
     const currentTime = new Date().getTime();
     const thresholdTime = currentTime + config.get('chattersThreshold') * 60 * 1000;
 
@@ -575,12 +667,19 @@
     handleCloseModalEvent(event);
     handleUserCardButtonEvent(event);
     handleNameTaggingEvent(event);
-    handleScrollToBottomEvent(event);
+    handleCloseChattersList(event);
+    if (hasClass(event.target, classes.chatAutoScroll)) { scrollToBottom(); playSound('tick-short'); }
   }
 
   function handleDblClick(event) {
     if (!isPageLoaded) return;
     handleHighlightUserEvent(event);
+  }
+
+  function handleCloseChattersList(event) {
+    const chatters = document.querySelector(`.maejok-chatter_count`);
+    const chattersListElm = document.querySelector(`.maejok-chatter_count-chatters`);
+    if (!chatters.contains(event.target) && chattersListElm) chattersListElm.remove('maejok-chatter_count-chatters-show');
   }
 
   function handleHighlightUserEvent(event) {
@@ -590,7 +689,7 @@
     const parent = target.closest(parentSelector);
     if (parent) {
       const usernameElement = parent.querySelector(`[class*="${classes.chatUsername}"]`)
-      const username = usernameElement ? usernameElement.innerHTML.replace(/<span[^>]*>.*?<\/span>/, '') : false
+      const username = usernameElement ? usernameElement.textContent.replace(/\[.*?\]/g, '') : false
       if (username) toggleUserHighlighting(username);
       if (window.getSelection) {
         const selection = window.getSelection();
@@ -608,20 +707,18 @@
     }
   }
 
-  function handleScrollToBottomEvent(event) {
-    // SCROLL TO BOTTOM
-    if (hasClass(event.target, classes.chatAutoScroll)) {
-      playSound('click');
-      const chatMessageList = document.querySelector(`[class*="${classes.chatMessageList}"]`);
-      chatMessageList.scrollTop = chatMessageList.scrollHeight;
-    }
-  }
-
   function handleNameTaggingEvent(event) {
     let username = null
     let chatNameEl = null
+    const isChatterList = hasClass(event.target, `maejok-chatter_count-chatter`);
     const isChatUsername = hasClass(event.target, classes.chatUsername);
     const isChatAvatar = hasClass(event.target.offsetParent, classes.chatAvatar);
+    // get name from chatter list
+    if (isChatterList) {
+      username = event.target.textContent
+      const chattersListElm = document.querySelector(`.maejok-chatter_count-chatters`);
+      chattersListElm.remove('maejok-chatter_count-chatters-show');
+    } else
     // get name from avatar
     if (isChatAvatar && config.get('enableAvatarTagging')) {
       const chatAvatar = event.target.parentElement
@@ -629,7 +726,7 @@
       username = chatNameEl.querySelector(`[class*="${classes.chatUsername}"]`).innerHTML
       let clan = chatNameEl.querySelector(`[class*="${classes.chatClan}"]`);
       if (clan) username = username.replace(/<span[^>]*>.*?<\/span>/, '');
-    }
+    } else
     // get name from username
     if (isChatUsername && config.get('enableNameTagging')) {
       chatNameEl = event.target
@@ -679,6 +776,7 @@
     }
   }
 
+
   // UTILITY
   function isNumeric(str) {
     if (typeof str != "string") return false
@@ -697,28 +795,16 @@
 
   function playSound(sound) {
     const audio = document.createElement('audio');
-    switch (sound) {
-      case 'blip':
-        audio.src = '/sounds/blip.mp3';
-        break;
-      case 'clickhigh':
-        audio.src = '/sounds/click-high-short.mp3';
-        break;
-      case 'clicklow':
-        audio.src = '/sounds/click-low-short.mp3';
-        break;
-      case 'shutter':
-        audio.src = '/sounds/shutter.wav';
-        break;
-      default:
-        audio.src = '/sounds/click-high-short.mp3';
-        break;
-      }
-    document.body.appendChild(audio)
-    audio.play();
-    audio.addEventListener('ended', () => {
-      audio.remove();
-    });
+    const sounds = new Map([['equip', 'mp3'], ['denied', 'mp3'], ['chunk-short', 'mp3'], ['blip', 'mp3'], ['book', 'mp3'], ['click-high-short', 'mp3'], ['click-low-short', 'mp3'], ['xp', 'mp3'], ['level', 'mp3'], ['twinkle', 'mp3'], ['mention', 'mp3'], ['click-harsh-short', 'wav'], ['swap-short', 'wav'], ['shutter', 'wav'], ['complete', 'wav'], ['xp-down', 'wav'], ['power', 'wav'], ['daily', 'wav'], ['item-found', 'wav'], ['item-consumed', 'wav'],['panic', 'wav'], ['poll', 'wav'], ['tick-short', 'wav']]);
+    const ext = sounds.get(sound);
+    if (ext) {
+      audio.src = `/sounds/${sound}.${ext}`;
+      document.body.appendChild(audio);
+      audio.play();
+      audio.addEventListener('ended', () => { audio.remove(); });
+    } else {
+      console.error(`MAEJOK-TOOLS :: Sound '${sound}' not found`);
+    }
   }
 
   function setCursorPosition(div) {
@@ -757,25 +843,67 @@
     chatMutationObserver.disconnect();
     chatMutationObserver = null
     initChatMutationObserver();
-    if (closeModal) handleCloseModalEvent();
+    if (closeModal) {
+      handleCloseModalEvent();
+      startUpdateChecker();
+    }
+  }
+
+  function scrollToBottom() {
+    const chatMessageList = document.querySelector(`[class*="${classes.chatMessageList}"]`);
+    chatMessageList.scrollTop = chatMessageList.scrollHeight;
   }
 
 
+
   // UPDATE
-  function checkForUpdate(callback) {
-    if (!config.get('enableUpdateChecks')) return;
-    const ts = new Date().getTime();
-    fetch(`https://raw.githubusercontent.com/maejok-xx/MAEJOK-TOOLS-FISHTANK/main/version.txt?cb=${ts}`)
+  let updateCheckIntervalId = null;
+  let upToDateNoticeShown = false;
+  function checkForUpdate() {
+    checkVersion((hasUpdate, newVersion) => {
+      if (!hasUpdate && upToDateNoticeShown) {
+        console.info('MAEJOK-TOOLS IS UP TO DATE!.');
+        upToDateNoticeShown = true;
+      } else if (hasUpdate) {
+        console.error(`\x1b[32mMAEJOK-TOOLS v${VERSION} :: UPDATE AVAILABLE!  Newest version: ${newVersion}`)
+        console.error(`\x1b[32mHead on over to https://greasyfork.org/en/scripts/465416-maejok-tools-for-fishtank-live/ to update!`);
+
+        insertChatMessage(`<div onclick="(event.target.tagName !== 'A') ? (document.getElementById('maejok-update').innerHTML = '<h4 style=\\'color:#F04;animation:notice-me 2s infinite;\\'>MAEJOK LOVES YOU!</h4>',window.open('https://greasyfork.org/en/scripts/465416-maejok-tools-for-fishtank-live/','_blank')) : null" style="animation:notice-me.3s 7;margin:4px;cursor:pointer;margin-top:10px;text-align:center;padding:10px"><div id="maejok-update"><h2 style="font-size:1.2rem;margin:0;color:#f07">MAEJOK-TOOLS</h2><p style="font-size:1rem;color:#fff"><b>Click to Update</b></p></div><div style="text-align:center;margin:5px 0 5px;font-size:.8rem;color:#fff">[ <a class="maejok-update" href="https://github.com/maejok-xx/MAEJOK-TOOLS-FISHTANK/blob/main/changelogs/${newVersion}.md" target="_blank">view change log</a> - <a class="maejok-update" href="#" onclick="event.preventDefault();document.getElementById('maejok-update').parentElement.remove();">dismiss</a> ]</div></div>`)
+
+        clearInterval(updateCheckIntervalId);
+        updateCheckIntervalId = null;
+        upToDateNoticeShown = false;
+        playSound('mention');
+      }
+    });
+  }
+
+  function startUpdateChecker() {
+    if (!config.get('enableUpdateChecks')) {
+      if (!updateCheckIntervalId) console.log('MAEJOK-TOOLS :: Update Checking Disabled');
+
+      clearInterval(updateCheckIntervalId);
+      updateCheckIntervalId = null;
+    } else {
+      checkForUpdate();
+      updateCheckIntervalId = setInterval(checkForUpdate, config.get('updateCheckFrequency')*60*1000);
+    }
+  }
+
+  function checkVersion(callback) {
+    const ts = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    // fetch(`https://raw.githubusercontent.com/maejok-xx/MAEJOK-TOOLS-FISHTANK/main/version.txt?cb=${ts}`)
+    fetch(`https://gist.githubusercontent.com/maejok-xx/50849b97b7262f19e40ebef6262d919f/raw/version.txt?cb=${ts}`)
       .then(response => {
         if (!response.ok) {
-          throw new Error(`MAEJOK-TOOLS Update Checker failed with status: ${response.status}`);
+          throw new Error(`MAEJOK-TOOLS :: Update Checker failed with status: ${response.status}`);
         }
         return response.text();
       })
       .then(data => {
         const latestVersion = data.trim();
         if (latestVersion !== VERSION) {
-          callback(true, latestVersion);
+          callback(true, latestVersion,);
         } else {
           callback(false);
         }
@@ -786,7 +914,7 @@
       });
   }
 
-  function insertUpdateMessage(msg){
+  function insertChatMessage(html){
     const chat = document.querySelector(`[class^="${classes.chatMessageList}"]`)
     const chatMessageDiv = document.createElement('div');
     chatMessageDiv.className = 'chat-message-default_chat-message-default__JtJQL';
@@ -795,14 +923,20 @@
     innerDiv.style.display = 'block';
     const messageSpan = document.createElement('span');
     messageSpan.className = 'chat-message-default_message__milmT';
-    messageSpan.innerHTML = msg;
+    messageSpan.innerHTML = html;
     innerDiv.appendChild(messageSpan);
     chatMessageDiv.appendChild(innerDiv);
     chat.appendChild(chatMessageDiv);
+    scrollToBottom();
   }
 
+  function insertChangelog() {
+      sessionStorage.removeItem('maejok-showChangelog');
+      insertChatMessage(`<div id="maejok-changelog" style="animation:notice-me.3s 7;margin:4px;cursor:pointer;margin-top:10px;text-align:center;padding:10px"><h2 style="font-size:1.2rem;margin:0;color:#f07">MAEJOK-TOOLS</h2><p style="font-size:1rem;color:#fff"><b>Has been updated to v${VERSION}!</b></p><div style="text-align:center;margin:5px 0 5px;font-size:.8rem;color:#fff">[ <a class="maejok-update" href="https://github.com/maejok-xx/MAEJOK-TOOLS-FISHTANK/blob/main/changelogs/${VERSION}.md" target="_blank">view change log</a> - <a class="maejok-update" href="#" onclick="event.preventDefault();document.getElementById('maejok-changelog').remove();">dismiss</a> ]</div></div>`);
+  }
 
-// OBSERVERS
+  // OBSERVERS
+  let chatMutationObserver = null;
   function initChatMutationObserver() {
     const configChecks = ['disableTimestamps', 'enableDenseChat', 'disableChatClan', 'disableAvatars', 'disableEmotes', 'disableHappenings'];
 
@@ -838,7 +972,7 @@
     });
 
     // HIGHLIGHT
-    const highlighted = config.get('highlightedUsers');
+    const highlighted = config.get('highlighted');
     const friends = config.get('friends');
     const messages = document.querySelectorAll(`[class*="${classes.chatMessageOuter}"]`);
     messages.forEach(element => {
@@ -871,7 +1005,7 @@
             }
 
             // HIGHLIGHT USERS
-            const highlighted = config.get('highlightedUsers');
+            const highlighted = config.get('highlighted');
             const highlightedIndex = highlighted.indexOf(username);
             if (highlightedIndex !== -1) {
               addedNode.classList.add('maejok-highlighted-user')
@@ -886,6 +1020,15 @@
               addedNode.classList.remove('maejok-friend-user');
             }
           }
+
+          // clear chatters on room change
+          let systemMessage = addedNode.querySelector(`[class*="${classes.chatSystem}"] div`);
+          if (systemMessage) {
+            const msg = systemMessage.textContent;
+            console.log(msg.includes('Joined '));
+            if (msg.includes('Joined ')) updateChattersList(my.name, chattersList, true);
+          }
+          // end clear chatters
 
           let usernameColor = null;
           const chatXPLevel = addedNode.querySelector(`[class*="${classes.chatXPLevel}"]`);
@@ -941,9 +1084,13 @@
   const settingsTitle = 'MAEJOK-TOOLS SETTINGS';
   const initConfig = () => {
     const settings = {
+      // default settings, overwritten after saving once.
       enableUpdateChecks: true,
+      updateCheckFrequency: 30,
       enableBigChat: true,
-      hideTimerBigChat: true,
+      persistBigChat: true,
+      bigChatState: false,
+      showTimerBigChat: false,
       enableNameTagging: true,
       enableAvatarTagging: true,
       disableTimestamps: true,
@@ -959,8 +1106,9 @@
       enableRecentChatters: true,
       chattersThreshold: 10,
       enableClickHighlightUsers: true,
-      highlightedUsers: [],
+      highlighted: [],
       friends: [],
+      agreementAccepted: false,
     };
 
     const get = (key) => { return settings[key]; };
@@ -990,41 +1138,106 @@
 
   const config = initConfig();
 
-  const initialization = setInterval(() => {
-    const chatBoxElement = document.querySelector(`[class*="${classes.chatBox}`);
-    if (chatBoxElement) {
-      clearInterval(initialization);
-      config.load();
-      isPageLoaded = true;
-      console.log('MAEJOK-TOOLS for FishTank.Live Season 2 - Started!');
-      const chatMessagesElement = document.querySelector(`[class*="${classes.chatMessages}"]`);
-      chatMessagesElement.style.padding = '0';
+  let isPageLoaded = false;
+  let my = { name: null, clan: null }
+  function start() {
+    const initWait = setInterval(() => {
+      const chatBoxElement = document.querySelector(`[class*="${classes.chatBox}`);
+      if (chatBoxElement) {
+        clearInterval(initWait);
+        config.load();
+        isPageLoaded = true;
 
-      initChatMutationObserver();
-      createSettingsButton();
-      joinClanChat();
-      initRecentChatters();
+        const chatMessagesElement = document.querySelector(`[class*="${classes.chatMessages}"]`);
+        chatMessagesElement.style.padding = '0';
 
-      document.addEventListener('keydown', handleKeyPress);
-      document.addEventListener('click', handleMouseClick);
-      document.addEventListener('dblclick', handleDblClick);
+        const displayNameElement = document.querySelector(`[class*="${classes.topBarDisplayName}"]`);
+        const clanNameElement = document.querySelector(`[class*="${classes.topBarClan}"]`);
+        my.name = displayNameElement.textContent;
+        my.clan = clanNameElement.textContent;
 
-      checkForUpdate((needUpdate, newVersion = false) => {
-        if (!needUpdate) {
-          console.info('MAEJOK-TOOLS IS UP TO DATE!.');
-        } else {
-          console.error(`MAEJOK-TOOLS v${VERSION} :: UPDATE AVAILABLE!  Newest version: ${newVersion}`)
-          console.error(`Head on over to https://greasyfork.org/en/scripts/465416-maejok-tools-for-fishtank-live/ to update!`);
+        document.addEventListener('keydown', handleKeyPress);
+        document.addEventListener('click', handleMouseClick);
+        document.addEventListener('dblclick', handleDblClick);
 
-          insertUpdateMessage(`<div style="background-color:#e3e3e3;border:1px solid #E0E0E0;padding:10px;text-align:center;"><h2 style="font-size:1.2rem;margin:0"><a href="https://greasyfork.org/en/scripts/465416-maejok-tools-for-fishtank-live/" target="_blank" style="text-decoration:none;color:blue">MAEJOK-TOOLS</a></h2><p style="font-size:1rem"><a href="https://greasyfork.org/en/scripts/465416-maejok-tools-for-fishtank-live/" target="_blank" style="text-decoration:none;color:#000"><b>Click to Update<b></a></p></div>`)
+        initChatMutationObserver();
+        createSettingsButton();
+        joinClanChat();
+        initRecentChatters();
+
+        console.log('MAEJOK-TOOLS :: Running');
+        startUpdateChecker();
+
+        sessionStorage.getItem('maejok-showChangelog') ? insertChangelog() : null;
+
+        if (config.get('persistBigChat')) {
+          setTimeout(() => { if (config.get('bigChatState')) toggleBigChat(); }, 500);
         }
-      });
+      }
+    }, 10);
+  }
+
+  config.load();
+  config.get('agreementAccepted') === VERSION ? start() : runAgreement();
+  function runAgreement() {
+    var agreement = prompt(`\nAGREEMENT:\n\nBy using MAEJOK-TOOLS you understand that this plugin is NOT endorsed nor promoted by Fishtank Live or its creators, therefore, any bugs or issues caused by the use of this plugin is NOT their problem.\n\nIf you have any issues with the site while using this plugin, DISABLE THE PLUGIN AND CONFIRM THE ISSUE STILL EXISTS BEFORE SAYING ANYTHING TO WES OR ANY OTHER STAFF.\n\nIf the problem is caused by the plugin, contact @maejok. Not Wes, not Jet... only @maejok.\n\nPLEASE, do not make bugs caused by this plugin Wes' problem or confuse him with errors that he has nothing to do with!!!\n\nIf you understand that Wes cannot and will not help you with this plugin and that this plugin may cause issues for you on the site, type \"yes sir\" below.\n\nAGAIN, DISABLE THIS PLUGIN AND MAKE SURE THIS PLUGIN ISN'T CAUSING YOUR ISSUES BEFORE YOU MAKE ANY BUG REPORTS TO WES!!!\n\nThis will show once per update.`);
+    if (agreement === "yes sir") {
+      config.set('agreementAccepted', VERSION);
+      config.save();
+      sessionStorage.setItem('maejok-showChangelog', true);
+      setTimeout(() => { window.location.reload(); }, 500);
+    } else {
+      alert('You did not accept the agreement.  MAEJOK-TOOLS will not load.\nDisable the MAEJOK-TOOLS plugin to disable this alert.')
     }
-  }, 10);
+  }
 
 
   // STYLES
   GM_addStyle(`
+        .maejok-chatter_count {
+          position: relative;
+          display: inline-block;
+          padding: 5px;
+          cursor: pointer;
+        }
+
+        .maejok-chatter_count-chatters {
+          display: none;
+          position: absolute;
+          height: auto;
+          width: 200px;
+          max-height: 300px;
+          overflow-y: auto;
+          overflow-x: hidden;
+          z-index: 10;
+          background-color: #111;
+          padding: 2px;
+        }
+
+        .maejok-chatter_count-chatter {
+          padding: 5px;
+          color: #eee;
+          background-color: #444;
+          width: 196px;
+          border-bottom: 1px solid #333;
+        }
+        .maejok-chatter_count-chatter:hover {
+          color: #f0c841;
+          background-color: #444;
+          border-left: 3px solid white;
+          cursor: pointer;
+        }
+
+        .maejok-chatter_count-chatters-show {
+          display: block;
+        }
+
+        .maejok-update,
+        .maejok-update:visited {
+          text-decoration: none;
+          color: #11f8ff;
+        }
+
         .maejok-highlighted-user{
           background-color: rgba(245, 39, 39, 0.16)!important;
           border: 1px solid rgba(245, 39, 39, 0.26)!important;
@@ -1035,7 +1248,7 @@
           border: 1px solid rgba(39, 245, 39, 0.16);
         }
 
-        .mTS2-chatBox-popOut {
+        .mTS2-chatBox-BigChat {
           top: 0!important;
           left: 0!important;
           z-index: 1!important;
@@ -1044,20 +1257,20 @@
           position: fixed!important;
         }
 
-        .mTS2-countdown-popOut-hide {
-            z-index: -10!important;
+        .mTS2-countdown-BigChat-hide {
+            z-index: -2!important;
         }
 
-        .mTS2-countdown-popOut-show {
+        .mTS2-countdown-BigChat-show {
             z-index: 4!important;
         }
 
-        .mTS2-chatters-popOut {
+        .mTS2-chatters-BigChat {
             position: absolute;
             left: 100px;
         }
 
-        .mTS2-chatMessages-popOut {
+        .mTS2-chatMessages-BigChat {
             height: 81%!important;
             border: 0!important;
             padding: 0!important;
@@ -1065,30 +1278,30 @@
             background-color: rgba(0, 0, 0, 0.0)!important;
         }
 
-        .mTS2-chatInput-popOut {
+        .mTS2-chatInput-BigChat {
             margin-left: 6px!important;
             margin-right: 6px!important;
         }
 
-        .mTS2-xpBar-popOut {
+        .mTS2-xpBar-BigChat {
           z-index: 20!important;
           margin-top: 40px!important;
             width: calc(100% + 170px)!important;
         }
 
-        .mTS2-topBarUser-popOut {
+        .mTS2-topBarUser-BigChat {
             visibility: hidden!important;
         }
 
-        .mTS2-topBarTitle-popOut {
+        .mTS2-topBarTitle-BigChat {
             z-index: 22!important;
         }
 
-        .mTS2-topBar-popOut {
+        .mTS2-topBar-BigChat {
             z-index: 22!important;
         }
 
-        .mTS2-topBarLogo-popOut {
+        .mTS2-topBarLogo-BigChat {
             margin-top: -34px!important;
             margin-left: 140px!important;
         }
@@ -1116,29 +1329,41 @@
           display: none!important;
       }
 
+      .mTS2-mobileNavPanel-BigChat {
+        display: none!important;
+      }
+
+      @keyframes notice-me {
+        0%, 100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(0.9);
+        }
+      }
 
       @media screen and (max-width: 1100px) {
-          .mTS2-topBar-popOut {
+          .mTS2-topBar-BigChat {
               display: none!important;
           }
-          .mTS2-xpBar-popOut {
-            width: 50%;
-            z-index: 20;
-            grid-row: 6/6;
-            margin-bottom: 15px;
+          .mTS2-xpBar-BigChat {
+            width: 50%!important;
+            z-index: 20!important;
+            grid-row: 6/6!important;
+            margin-bottom: 15px!important;
           }
-          .mTS2-chatters-popOut {
-            left: 145px;
-            position: absolute;
+          .mTS2-chatters-BigChat {
+            left: 145px!important;
+            position: absolute!important;
           }
       }
       @media screen and (max-width: 800px) {
-          .mTS2-xpBar-popOut {
-              width: 25%;
+          .mTS2-xpBar-BigChat {
+              width: 25%!important;
           }
-          .mTS2-chatters-popOut {
-            left: 130px;
-            position: absolute;
+          .mTS2-chatters-BigChat {
+            left: 130px!important;
+            position: absolute!important;
           }
       }
   `);

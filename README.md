@@ -28,7 +28,10 @@ Requires TamperMonkey, ViolentMonkey, or GreaseMonkey.
 ---
 
 ---
-### TODO
- - Chat Log Extender
- - Language De-Filtering
- - User Tagging Autocomplete
+### Feature Ideas
+ - view chatters list when clicking chatters count w/click to tag
+ - view & edit all friends/highlighted lists
+ - clan highlighting (and maybe tagging?)
+ - chat log extender
+ - language de-filtering (probably won't do this one)
+ - inline autocomplete user tagging
