@@ -2,7 +2,7 @@
 // @name         MAEJOK-TOOLS for Fishtank.live
 // @description  Tools for Fishtank.live Season 2!
 // @author       maejok-xx
-// @version      2.4.4
+// @version      2.4.5
 // @license      GNU GPLv3
 // @homepageURL  https://github.com/maejok-xx/MAEJOK-TOOLS-FISHTANK
 // @namespace    https://greasyfork.org/en/scripts/465416-maejok-tools-for-fishtank-live
@@ -20,7 +20,7 @@
 
 (function () {
   'use strict';
-  const VERSION = '2.4.4';
+  const VERSION = '2.4.5';
 
   // DON'T EDIT THESE!!
   const classes = {
@@ -93,6 +93,14 @@
   };
 
   // ELEMENT CREATION
+
+  function openSettingsTab(tabName) {
+    const tabContents = document.querySelectorAll(`[class^="maejok-settings_tab-content"]`);
+    for (const tabContent of tabContents) { tabContent.style.display = "none"; }
+    const content = document.querySelector(`.maejok-settings_tab-content_${tabName}`)
+    content.style.display = "block";
+  }
+
   function createSettingsPanel() {
     if (!isPageLoaded || document.querySelector(`.${classes.modalContainer}`)) return;
 
@@ -193,72 +201,153 @@
   }
 
   function addSettingsBody(modalBody) {
+    const tabs = ['main','hiders','about']
+
     const form = document.createElement('form');
 
     form.classList.add('maejok-settings_form');
 
     form.addEventListener('submit', (event) => { event.preventDefault(); saveConfig(); });
 
+    const settingsPanel = document.createElement('div');
+    settingsPanel.className = `maejok-settings-panel`;
+    settingsPanel.style.height = '450px';
+    settingsPanel.style.width = '500px';
+    form.appendChild(settingsPanel)
+
+    const buttonBar = document.createElement('div');
+    buttonBar.className = `maejok-settings_tab-bar`;
+    buttonBar.style.textAlign = 'center';
+    settingsPanel.appendChild(buttonBar)
+
+    tabs.forEach(tab => {
+      const tabButton = document.createElement('button');
+      tabButton.classList.add('console-button-long_console-button-long__G6irT');
+      tabButton.classList.add('console-button-long_md__y_aAD');
+      tabButton.classList.add('maejok-settings_tab-button');
+      tabButton.setAttribute('style', 'position: absolute;');
+      tabButton.setAttribute('style', 'margin-top: 20px;');
+      tabButton.setAttribute('style', 'bottom: 0px;');
+      tabButton.style.width = '100%';
+
+      const tabButtonImage = document.createElement('img');
+      tabButtonImage.alt = '';
+      tabButtonImage.setAttribute('loading', 'lazy');
+      tabButtonImage.width = '373';
+      tabButtonImage.height = '75';
+      tabButtonImage.setAttribute('decoding', 'async');
+      tabButtonImage.setAttribute('data-nimg', '1');
+      tabButtonImage.src = 'images/slices/console-button-long-orange.png';
+      tabButtonImage.style.color = 'transparent';
+
+      const tabButtonText = document.createElement('div');
+      tabButtonText.classList.add('console-button-long_text__ajAjy');
+      tabButtonText.textContent = tab;
+
+      tabButton.addEventListener("click", (event) => {
+        openSettingsTab(`${tab}`);
+        event.stopPropagation();
+        event.preventDefault();
+        playSound('click-high-short');
+      });
+      buttonBar.appendChild(tabButton)
+      tabButton.appendChild(tabButtonImage)
+      tabButton.appendChild(tabButtonText)
+    });
+
+    const tabMain = document.createElement('div');
+    tabMain.className = `maejok-settings_tab-content_main`;
+    tabMain.name = 'main'
+
+    const tabHiders = document.createElement('div');
+    tabHiders.className = `maejok-settings_tab-content_hiders`;
+    tabHiders.name = 'hiders'
+
+    // const tabUpdates = document.createElement('div');
+    // tabUpdates.className = `maejok-settings_tab-content_updates`;
+    // tabUpdates.name = 'updates'
+
+    const tabAbout = document.createElement('div');
+    tabAbout.className = `maejok-settings_tab-content_about`;
+    tabAbout.name = 'about'
+
+    settingsPanel.appendChild(tabMain)
+    settingsPanel.appendChild(tabHiders)
+    // settingsPanel.appendChild(tabUpdates)
+    settingsPanel.appendChild(tabAbout)
+
+    // ABOUT
+
+    const aboutPage = document.createElement('div');
+    aboutPage.innerHTML = `<div class="maejok-about"><div class="container"><h1 style="text-align: center;color: rgb(232, 0, 232);">MAEJOK-TOOLS</h1><p><strong>Author:</strong> <a href="#" id="tagUserLink" onclick="event.preventDefault();">@maejok</a> | <a href="https://twitter.com/maejok" target="_blank">x/maejok</a></p><p><strong>Version:</strong> ${VERSION}</p><p>This plugin is not created, promoted, nor endorsed by the creators of Fishtank Live.</p><p>Do not ask them for help with this plugin.</p><p>If you have issues while using the plugin, disable it and try again before you report any bugs to Wes or Fishtank staff!!</p><p>All bug reports are to be directed at <a href="#" id="tagUserLink" onclick="event.preventDefault();">@maejok</a> in Fishtank chat or on X <a href="https://twitter.com/maejok" target="_blank">x/maejok</a></p></div></div>`;
+    tabAbout.appendChild(aboutPage);
+
+
+    //main
     const enableRecentChatters = createCheckbox('Enable Chatter Count', 'enableRecentChatters', ['prompt', 'Threshold', 'How long should someone be considered active in chat? (in minutes) (Default: 10)', 'chattersThreshold', 'min.']);
-    form.appendChild(enableRecentChatters);
+    tabMain.appendChild(enableRecentChatters);
 
     const enableBigChat = createCheckbox('Big Chat Mode', 'enableBigChat', ['help', ' ? ', 'Hit CTRL+` or CTRL+SHIFT+SPACE to toggle']);
-    form.appendChild(enableBigChat);
+    tabMain.appendChild(enableBigChat);
 
     const persistBigChat = createCheckbox('Persist Big Chat State', 'persistBigChat', ['help', ' ? ', 'Remembers which state Big Chat was in last time you left the site and returns to that state on page load']);
-    form.appendChild(persistBigChat);
+    tabMain.appendChild(persistBigChat);
 
     const showTimerBigChat = createCheckbox('Show Countdown in Big Chat Mode', 'showTimerBigChat', ['help', ' ? ', 'Hides or shows the countdown timer when Big Chat is enabled']);
-    form.appendChild(showTimerBigChat);
+    tabMain.appendChild(showTimerBigChat);
 
     const enableClickHighlightUsers = createCheckbox('Enable Users Highlighting', 'enableClickHighlightUsers', ['help', ' ? ', 'Highlights all messages by user.  Will persist between page reloads.']);
-    form.appendChild(enableClickHighlightUsers);
+    tabMain.appendChild(enableClickHighlightUsers);
 
     const enableAvatarTagging = createCheckbox('Avatar Click-To-Tag', 'enableAvatarTagging', ['help', ' ? ', 'Tags chat sender when you click their username']);
-    form.appendChild(enableAvatarTagging);
+    tabMain.appendChild(enableAvatarTagging);
 
     const enableNameTagging = createCheckbox('Username Click-To-Tag', 'enableNameTagging', ['help', ' ? ', 'Tags chat sender when you click their avatar']);
-    form.appendChild(enableNameTagging);
+    tabMain.appendChild(enableNameTagging);
 
     const enableDenseChat = createCheckbox('Enable Dense Chat', 'enableDenseChat', ['help', ' ? ', 'Removes padding around chat messages']);
-    form.appendChild(enableDenseChat);
+    tabMain.appendChild(enableDenseChat);
 
     const autoClanChat = createCheckbox('Auto-Join Clan Chat', 'autoClanChat', ['help', ' ? ', 'Automatically joins your clan\'s chat upon page load']);
-    form.appendChild(autoClanChat);
+    tabMain.appendChild(autoClanChat);
 
+
+    //hiders
     const disableTimestamps = createCheckbox('Hide Timestamps', 'disableTimestamps', ['help', ' ? ', 'Hides timestamps in chat']);
-    form.appendChild(disableTimestamps);
+    tabHiders.appendChild(disableTimestamps);
 
     const disableChatClans = createCheckbox('Hide Clans', 'disableChatClans', ['help', ' ? ', 'Hides chatters clans tags in chat']);
-    form.appendChild(disableChatClans);
+    tabHiders.appendChild(disableChatClans);
 
     const disableLevels = createCheckbox('Hide Levels', 'disableLevels', ['help', ' ? ', 'Hides chatters levels in chat']);
-    form.appendChild(disableLevels);
+    tabHiders.appendChild(disableLevels);
 
     const disableAvatars = createCheckbox('Hide Avatars', 'disableAvatars', ['help', ' ? ', 'Hides chatters avatars in chat']);
-    form.appendChild(disableAvatars);
+    tabHiders.appendChild(disableAvatars);
 
     const disableEmotes = createCheckbox('Hide Emotes', 'disableEmotes', ['help', ' ? ', 'Hides all emotes in chat']);
-    form.appendChild(disableEmotes);
+    tabHiders.appendChild(disableEmotes);
 
     const disableMedals = createCheckbox('Hide Medals', 'disableMedals', ['help', ' ? ', 'Hides all medals in chat.  If only medals are sent, the entire message is hidden']);
-    form.appendChild(disableMedals);
+    tabHiders.appendChild(disableMedals);
 
     const disableHappenings = createCheckbox('Hide Happenings', 'disableHappenings', ['help', ' ? ', 'Hides all notices for consumables (inventory items) notices in chat']);
-    form.appendChild(disableHappenings);
+    tabHiders.appendChild(disableHappenings);
 
     const disableSystemMessages = createCheckbox('Hide System Messages', 'disableSystemMessages', ['help', ' ? ', 'Hides all room joins, clan/clanless attacks, War Toys, etc. from chat']);
-    form.appendChild(disableSystemMessages);
+    tabHiders.appendChild(disableSystemMessages);
 
     const enableUpdateChecks = createCheckbox('Allow plugin to check for updates', 'enableUpdateChecks', ['prompt', 'Frequency', 'How many minutes between update checks? (in minutes) (Default: 30) Note: This will also enable update checks on every page load.', 'updateCheckFrequency', 'min.']);
-    form.appendChild(enableUpdateChecks);
+    tabMain.appendChild(enableUpdateChecks);
 
     // save button
     const saveButton = document.createElement('button');
     saveButton.classList.add('console-button-long_console-button-long__G6irT');
     saveButton.classList.add('console-button-long_lg__hdQwz');
     saveButton.setAttribute('type', 'submit');
+    saveButton.setAttribute('style', 'position: absolute;');
     saveButton.setAttribute('style', 'margin-top: 20px;');
+    saveButton.setAttribute('style', 'bottom: 0px;');
     saveButton.style.width = '100%';
 
     const saveButtonImage = document.createElement('img');
@@ -281,6 +370,12 @@
     form.appendChild(saveButton);
 
     modalBody.appendChild(form);
+
+    document.getElementById('tagUserLink').addEventListener('click', () => {
+      tagUser('maejok');
+    });
+
+    openSettingsTab("main");
   }
 
   function createCheckbox(label, id, prompt = false) {
@@ -598,7 +693,7 @@
     const chatUserList = document.createElement('div');
     chatUserList.classList.add(`maejok-chatter_count-chatters`);
     chatUserList.style.top = `${event.clientY}px`;
-    chatUserList.style.left = `${event.clientX}px`;
+    chatUserList.style.left = `${event.clientX-90}px`;
 
     document.body.appendChild(chatUserList);
     if (chattersList.length === 0){
@@ -734,18 +829,7 @@
     // give up if no username
     if (!username) return;
     // insert tag
-    const chatInputElement = document.querySelector(`[class*="${classes.chatInput}"]`);
-    let currentInput = chatInputElement.innerHTML;
-    let updateInput = new KeyboardEvent('input', { bubbles: true });
-
-    if (currentInput) {
-      chatInputElement.innerHTML = currentInput + '&nbsp;@' + username + '&nbsp;';
-    } else {
-      chatInputElement.innerHTML = '@' + username + '&nbsp;';
-    }
-    chatInputElement.dispatchEvent(updateInput);
-    setCursorPosition(chatInputElement);
-    playSound('click');
+    tagUser(username);
   }
 
   function handleCloseModalEvent(event) {
@@ -777,6 +861,20 @@
 
 
   // UTILITY
+  function tagUser(username){
+    const chatInputElement = document.querySelector(`[class*="${classes.chatInput}"]`);
+    let currentInput = chatInputElement.innerHTML;
+    let updateInput = new KeyboardEvent('input', { bubbles: true });
+
+    if (currentInput) {
+      chatInputElement.innerHTML = currentInput + '&nbsp;@' + username + '&nbsp;';
+    } else {
+      chatInputElement.innerHTML = '@' + username + '&nbsp;';
+    }
+    chatInputElement.dispatchEvent(updateInput);
+    setCursorPosition(chatInputElement);
+    playSound('click-high-short');
+  }
   function isNumeric(str) {
     if (typeof str != "string") return false
     if (str === undefined) return false
@@ -1191,6 +1289,48 @@
 
   // STYLES
   GM_addStyle(`
+        .maejok-about a,
+        .maejok-about a:visited {
+          text-decoration: none;
+          font-weight: 600;
+          color: #11f8ff
+        }
+
+        .maejok-about .container {
+          background-color: rgba(0,0,0,0.35);
+          padding: 25px;
+        }
+
+        .maejok-about h1 {
+          text-align: center;
+          margin-bottom: 20px;
+          color: rgb(200, 0, 200);
+        }
+
+        .maejok-about p {
+          margin: 0 0 20px;
+          color: white;
+        }
+
+        .maejok-settings_tab-content {
+          // display: none;
+          color: white;
+        }
+
+        .maejok-settings_tab-bar {
+          display: flex;
+          gap: 2px;
+          margin-bottom: 20px;
+        }
+
+        .maejok-settings_tab-button {
+          flex: 1;
+          border: none;
+          cursor: pointer;
+          width: 100px;
+          text-transform: uppercase;
+        }
+
         .maejok-chatter_count {
           position: relative;
           display: inline-block;
@@ -1207,15 +1347,15 @@
           overflow-y: auto;
           overflow-x: hidden;
           z-index: 10;
-          background-color: #111;
-          padding: 2px;
+          // background-color: #111;
+          // padding: 2px;
         }
 
         .maejok-chatter_count-chatter {
           padding: 5px;
           color: #eee;
           background-color: #444;
-          width: 196px;
+          width: 200px;
           border-bottom: 1px solid #333;
         }
         .maejok-chatter_count-chatter:hover {
