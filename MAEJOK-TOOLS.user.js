@@ -892,8 +892,8 @@
 
   function checkVersion(callback) {
     const ts = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
-    // fetch(`https://raw.githubusercontent.com/maejok-xx/MAEJOK-TOOLS-FISHTANK/main/version.txt?cb=${ts}`)
-    fetch(`https://gist.githubusercontent.com/maejok-xx/50849b97b7262f19e40ebef6262d919f/raw/version.txt?cb=${ts}`)
+    fetch(`https://raw.githubusercontent.com/maejok-xx/MAEJOK-TOOLS-FISHTANK/main/version.txt?cb=${ts}`)
+    // fetch(`https://gist.githubusercontent.com/maejok-xx/50849b97b7262f19e40ebef6262d919f/raw/version.txt?cb=${ts}`)
       .then(response => {
         if (!response.ok) {
           throw new Error(`MAEJOK-TOOLS :: Update Checker failed with status: ${response.status}`);
@@ -1190,7 +1190,6 @@
       alert('You did not accept the agreement.  MAEJOK-TOOLS will not load.\nDisable the MAEJOK-TOOLS plugin to disable this alert.')
     }
   }
-
 
   // STYLES
   GM_addStyle(`
