@@ -27,6 +27,7 @@
   // DON'T EDIT THESE!!
   const classes = {
     mainHome: 'home_home',
+    mainPanel: 'main-panel',
     // top bar
     topBar: 'top-bar_top-bar',
     topBarUser: 'top-bar_user',
@@ -34,7 +35,7 @@
     topBarLogo: 'top-bar_logo',
     topBarClan: 'top-bar_clan',
     topBarDisplayName: 'top-bar_display-name',
-    globalMission: 'global-mission-button_global',
+    globalMission: 'global-mission-button',
     // chat
     chatHeader: 'chat_header',
     chatPresence: 'chat_presence',
@@ -111,17 +112,8 @@
     }
   }
 
-  let openSettingsBigChatState = false
   function createSettingsPanel() {
     if (!isPageLoaded || document.querySelector(`.${classes.modalContainer}`)) return;
-
-    if (isBigChat){
-      openSettingsBigChatState = true;
-      toggleBigChat();
-    } else {
-      openSettingsBigChatState = false;
-      playSound('click-low-short');
-    }
 
     config.load();
 
@@ -325,6 +317,9 @@
 
     const autoClanChat = createCheckbox('Auto-Join Clan Chat', 'autoClanChat', ['help', ' ? ', 'Automatically joins your clan\'s chat upon page load']);
     tabMain.appendChild(autoClanChat);
+
+    const extendChat = createCheckbox('Extend Chat History', 'extendChat', ['prompt', 'Limit', 'Number of messages to keep in history (Minimum/Default: 100)', 'chatHistoryLimit', '']);
+    tabMain.appendChild(extendChat);
 
 
     //hiders
@@ -706,20 +701,18 @@
 
 
   // TOGGLES
-  let isBigChat = 0;
+  let bigChatMode = 0;
   function toggleBigChat(state = null) {
     if (!isPageLoaded || !config.get('enableBigChat')) return;
-    isBigChat = (state != null) ? state : (isBigChat + 1) % 3;
+    bigChatMode = (state != null) ? state : (bigChatMode + 1) % 3;
 
     if (config.get('persistBigChat')) {
-      config.set('bigChatState', isBigChat);
+      config.set('bigChatState', bigChatMode);
       config.save()
     }
 
     playSound('shutter');
     const chatBoxElement = document.querySelector(`[class*="${classes.chatBox}"]`);
-    const chatMessagesElement = document.querySelector(`[class*="${classes.chatMessages}"]`);
-    const chatInputFormElement = document.querySelector(`[class*="${classes.chatInputForm}"]`);
     const chatChatterCountElement = document.querySelector(`.${classes.chatterCount}`);
     const xpBarElement = document.querySelector(`[class*="${classes.xpBar}"]`);
     const topBarElement = document.querySelector(`[class*="${classes.topBar}"]`);
@@ -728,40 +721,39 @@
     const topBarLogoElement = document.querySelector(`[class*="${classes.topBarLogo}"]`);
     const happeningMessageElement = document.querySelector(`[class*="${classes.happeningMessage}"]`);
     const countDownTimerElement = document.querySelector(`[class*="${classes.countDownTimer}"]`);
-    const secondaryPanel = document.querySelector(`[class^="${classes.secondaryPanel}"]`);
     const mobileNavPanel = document.querySelector(`[class^="${classes.mobileNavPanel}"]`);
-    const globalMission = document.querySelector(`[class*="${classes.globalMission}"]`);
+    const globalMission = document.querySelector(`[class^="${classes.globalMission}"]`);
+    // const secondaryPanel = document.querySelector(`[class^="${classes.secondaryPanel}"]`);
+    // const chatMessagesElement = document.querySelector(`[class*="${classes.chatMessages}"]`);
+    // const chatInputFormElement = document.querySelector(`[class*="${classes.chatInputForm}"]`);
 
     if (chatBoxElement) {
-      chatBoxElement.classList.toggle('mTS2-chatBox-BigChat-1', isBigChat === 1);
-      chatBoxElement.classList.toggle('mTS2-chatBox-BigChat-2', isBigChat === 2);
+      chatBoxElement.classList.toggle('mTS2-chatBox-BigChat-1', bigChatMode === 1);
+      chatBoxElement.classList.toggle('mTS2-chatBox-BigChat-2', bigChatMode === 2);
 
-      topBarLogoElement.classList.toggle('mTS2-topBarLogo-BigChat-1', isBigChat === 1);
-      topBarLogoElement.classList.toggle('mTS2-topBarLogo-BigChat-2', isBigChat === 2);
+      topBarLogoElement.classList.toggle('mTS2-topBarLogo-BigChat-1', bigChatMode === 1);
+      topBarLogoElement.classList.toggle('mTS2-topBarLogo-BigChat-2', bigChatMode === 2);
 
-      topBarTitleElement.classList.toggle('mTS2-topBarTitle-BigChat-1', isBigChat === 1);
-      topBarTitleElement.classList.toggle('mTS2-topBarTitle-BigChat-2', isBigChat === 2);
+      topBarTitleElement.classList.toggle('mTS2-topBarTitle-BigChat-1', bigChatMode === 1);
+      topBarTitleElement.classList.toggle('mTS2-topBarTitle-BigChat-2', bigChatMode === 2);
 
-      topBarUserElement.classList.toggle('mTS2-topBarUser-BigChat-1', isBigChat !== 0);
+      topBarUserElement.classList.toggle('mTS2-topBarUser-BigChat-1', bigChatMode !== 0);
 
-      topBarElement.classList.toggle('mTS2-topBar-BigChat', isBigChat === 2);
+      topBarElement.classList.toggle('mTS2-topBar-BigChat', bigChatMode === 2);
 
-      xpBarElement.classList.toggle('mTS2-xpBar-BigChat-1', isBigChat === 1);
-      xpBarElement.classList.toggle('mTS2-xpBar-BigChat-2', isBigChat === 2);
+      xpBarElement.classList.toggle('mTS2-xpBar-BigChat-1', bigChatMode === 1);
+      xpBarElement.classList.toggle('mTS2-xpBar-BigChat-2', bigChatMode === 2);
 
-      mobileNavPanel.classList.toggle('mTS2-mobileNavPanel-BigChat', isBigChat !== 0);
-      globalMission.classList.toggle('mTS2-globalMission-BigChat', isBigChat !== 0);
+      mobileNavPanel.classList.toggle('mTS2-mobileNavPanel-BigChat', bigChatMode !== 0);
+      globalMission.classList.toggle('mTS2-globalMission-BigChat', bigChatMode !== 0);
+      chatChatterCountElement.classList.toggle('mTS2-chatters-BigChat', bigChatMode !== 0);
 
-      // chatMessagesElement.classList.toggle('mTS2-chatMessages-BigChat', isBigChat);
-      // chatInputFormElement.classList.toggle('mTS2-chatInput-BigChat', isBigChat);
-      // chatChatterCountElement.classList.toggle('mTS2-chatters-BigChat', isBigChat);
-      // secondaryPanel.classList.toggle('mTS2-secondaryPanel-BigChat', isBigChat);
+      // chatMessagesElement.classList.toggle('mTS2-chatMessages-BigChat', bigChatMode);
+      // chatInputFormElement.classList.toggle('mTS2-chatInput-BigChat', bigChatMode);
+      // secondaryPanel.classList.toggle('mTS2-secondaryPanel-BigChat', bigChatMode);
 
-      if (config.get('showTimerBigChat')) countDownTimerElement?.classList.toggle('mTS2-countdown-BigChat-show', isBigChat);
-      if (!config.get('showTimerBigChat')) countDownTimerElement?.classList.toggle('mTS2-countdown-BigChat-hide', isBigChat);
-
-      if (happeningMessageElement) happeningMessageElement.style.textAlign = isBigChat ? 'unset' : 'center';
-      xpBarElement.style.transition = 'margin-top 0.5s';
+      if (config.get('showTimerBigChat')) countDownTimerElement.classList.toggle('mTS2-countdown-BigChat-show', bigChatMode !== 0);
+      if (!config.get('showTimerBigChat')) countDownTimerElement.classList.toggle('mTS2-countdown-BigChat-hide', bigChatMode !== 0);
     }
 
   }
@@ -882,7 +874,7 @@
     const chatUserList = document.createElement('div');
     chatUserList.classList.add(`maejok-chatter_count-chatters`);
 
-    if (isBigChat) {
+    if (bigChatMode) {
       chatUserList.style.top = `${event.clientY+3}px`;
       chatUserList.style.left = `${event.clientX-56}px`;
     } else {
@@ -964,7 +956,8 @@
   // EVENTS
   function handleKeyPress(event) {
     if (!isPageLoaded) return;
-    if (event.ctrlKey && event.keyCode === 192 || event.ctrlKey && event.shiftKey && event.keyCode === 32  || (isBigChat && event.keyCode === 27)) { toggleBigChat(); return; }
+    if (event.ctrlKey && event.keyCode === 192 || event.ctrlKey && event.shiftKey && event.keyCode === 32 ) { toggleBigChat(); return; }
+    if (bigChatMode !== 0 && event.keyCode === 27) { toggleBigChat(0); return; }
     if (event.keyCode === 27) { handleCloseModalEvent(); }
   }
 
@@ -1453,13 +1446,18 @@
         v: 1
       },
       agreementAccepted: false,
+      extendChat: false,
+      chatHistoryLimit: 100,
     };
+    const internalSettings = {
+      waitElement: classes.globalMission
+    }
 
     const get = (key) => { return settings[key]; };
 
-    const set = (key, value) => {
-      if (settings.hasOwnProperty(key)) { settings[key] = value; }
-    };
+    const internal = (key) => { return internalSettings[key]; };
+
+    const set = (key, value) => { if (settings.hasOwnProperty(key)) { settings[key] = value; }};
 
     const load = () => {
       const storedSettings = JSON.parse(localStorage.getItem('s2_maejoktools-settings'));
@@ -1484,7 +1482,7 @@
       localStorage.setItem('s2_maejoktools-settings', JSON.stringify(storedSettings));
     };
 
-    return { get, set, load, save };
+    return { get, internal, set, load, save };
   };
   const config = initConfig();
 
@@ -1492,15 +1490,12 @@
   let isPageLoaded = false;
   let my = { name: null, clan: null }
   function start() {
+    config.load();
     const initWait = setInterval(() => {
-      const chatBoxElement = document.querySelector(`[class*="${classes.chatBox}`);
-      if (chatBoxElement) {
+      const waitElement = document.querySelector(`[class^="${config.internal('waitElement')}`);
+      if (waitElement) {
         clearInterval(initWait);
-        config.load();
         isPageLoaded = true;
-
-        const chatMessagesElement = document.querySelector(`[class*="${classes.chatMessages}"]`);
-        chatMessagesElement.style.padding = '0';
 
         const displayNameElement = document.querySelector(`[class*="${classes.topBarDisplayName}"]`);
         const clanNameElement = document.querySelector(`[class*="${classes.topBarClan}"]`);
@@ -1521,10 +1516,11 @@
 
         sessionStorage.getItem('maejok-showChangelog') ? insertChangelog() : null;
 
-        if (config.get('persistBigChat')) {
-          setTimeout(() => { if (config.get('bigChatState')) toggleBigChat(config.get('bigChatState')); }, 500);
-        }
+        if (config.get('persistBigChat') && config.get('bigChatState')) toggleBigChat(config.get('bigChatState'));
       }
+
+      const chatMessagesElement = document.querySelector(`[class*="${classes.chatMessages}"]`);
+      if (chatMessagesElement) chatMessagesElement.style.padding = '0';
     }, 10);
   }
 
