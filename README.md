@@ -3,11 +3,11 @@
 ### Be sure to watch Season 1 and get ready for Season 2 at https://www.fishtank.live/
 ---
 Current Features:
-- Big Chat mode (Use CTRL+` or CTRL+SHIFT+SPACE to toggle)
-- "Friending" (highlight select people with green in chat by visiting their profile)
-- Double-Click Messages in chat to toggle highlighting of all messages from that user (persistent between refreshes)
+- MidChat and BigChat mode (Use CTRL+` or CTRL+SHIFT+SPACE to toggle)
+- "Friending" and "Watching" users
+- Double-Click Messages in chat to toggle "Watching" of all messages from that user (persists between visits)
 - Enter Clan Chat Automatically
-- Active Chatters Count/List (click count)
+- Active Chatters Count/List (click count to see list)
 - Dense Chat mode
 - Click Avatars/Usernames to tag users
 - Quick Scroll to bottom (click "Auto-scroll off")
