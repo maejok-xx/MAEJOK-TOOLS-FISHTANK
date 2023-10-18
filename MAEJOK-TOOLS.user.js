@@ -1073,6 +1073,8 @@
 
   // UTILITY
   function tagUser(username){
+    username = username.replace(/\[.*?\]/g, '')
+    console.log(username);
     const chatInputElement = document.querySelector(`[class*="${classes.chatInput}"]`);
     let currentInput = chatInputElement.innerHTML;
     let updateInput = new KeyboardEvent('input', { bubbles: true });
