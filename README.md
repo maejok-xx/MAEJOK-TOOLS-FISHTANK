@@ -29,9 +29,9 @@ Requires TamperMonkey, ViolentMonkey, or GreaseMonkey.
 
 ---
 ### Feature Ideas
- - view chatters list when clicking chatters count w/click to tag
- - view & edit all friends/highlighted lists
+ - /flipcoin
+ - "away" mode (log mentions)
  - clan highlighting (and maybe tagging?)
  - chat log extender
- - language de-filtering (probably won't do this one)
+ - next daily bonus xp countdown
  - inline autocomplete user tagging

@@ -2,7 +2,7 @@
 // @name         MAEJOK-TOOLS for Fishtank.live
 // @description  Tools for Fishtank.live Season 2!
 // @author       maejok-xx
-// @version      2.4.5
+// @version      2.4.6
 // @license      GNU GPLv3
 // @homepageURL  https://github.com/maejok-xx/MAEJOK-TOOLS-FISHTANK
 // @namespace    https://greasyfork.org/en/scripts/465416-maejok-tools-for-fishtank-live
@@ -10,6 +10,7 @@
 // @match        *://*.fishtank.live/*
 // @run-at       document-start
 // @grant        GM_addStyle
+// @grant        GM_info
 // ==/UserScript==
 
 
@@ -20,7 +21,8 @@
 
 (function () {
   'use strict';
-  const VERSION = '2.4.5';
+
+  const VERSION = GM_info.script.version;
 
   // DON'T EDIT THESE!!
   const classes = {
@@ -80,6 +82,8 @@
     // bars
     xpBar: 'experience-bar_experience-bar',
     countDownTimer: 'countdown_countdown',
+    // secondary
+    secondaryPanel: 'secondary-panel_secondary-panel__vUc65',
     // maejok elements:
     chatterCount: 'maejok-chatter_count-count',
 
@@ -91,6 +95,7 @@
       modalClose: ['close-button_close-button__BKUKA', 'close-button_sm__n0dZT'],
     }
   };
+  let lists = { chatters: [], friends: [], watching: [], colors: [] };
 
   // ELEMENT CREATION
 
@@ -98,13 +103,24 @@
     const tabContents = document.querySelectorAll(`[class^="maejok-settings_tab-content"]`);
     for (const tabContent of tabContents) { tabContent.style.display = "none"; }
     const content = document.querySelector(`.maejok-settings_tab-content_${tabName}`)
-    content.style.display = "block";
+    if (hasClass(content, 'maejok-settings_tab-content_friends')) {
+      content.style.display = "inline-flex";
+    } else {
+      content.style.display = "block";
+    }
   }
 
+  let openSettingsBigChatState = false
   function createSettingsPanel() {
     if (!isPageLoaded || document.querySelector(`.${classes.modalContainer}`)) return;
 
-    isBigChat ? toggleBigChat() : playSound('click-low-short');
+    if (isBigChat){
+      openSettingsBigChatState = true;
+      toggleBigChat();
+    } else {
+      openSettingsBigChatState = false;
+      playSound('click-low-short');
+    }
 
     config.load();
 
@@ -164,7 +180,7 @@
     settingsModalContainer.appendChild(settingsModalBackdrop);
     settingsModalContainer.appendChild(settingsModal);
 
-    screws.querySelector(`[class*="${classes.modalScrewsTR}"]`).remove()
+    screws.querySelector(`[class*="${classes.modalScrewsTR}"]`)?.remove()
     addSettingsBody(modalBody);
   }
 
@@ -201,7 +217,7 @@
   }
 
   function addSettingsBody(modalBody) {
-    const tabs = ['main','hiders','about']
+    const tabs = ['main','hiders', 'friends','about'];
 
     const form = document.createElement('form');
 
@@ -211,8 +227,6 @@
 
     const settingsPanel = document.createElement('div');
     settingsPanel.className = `maejok-settings-panel`;
-    settingsPanel.style.height = '450px';
-    settingsPanel.style.width = '500px';
     form.appendChild(settingsPanel)
 
     const buttonBar = document.createElement('div');
@@ -256,16 +270,16 @@
     });
 
     const tabMain = document.createElement('div');
-    tabMain.className = `maejok-settings_tab-content_main`;
+    tabMain.className = (`maejok-settings_tab-content_main`);
     tabMain.name = 'main'
 
     const tabHiders = document.createElement('div');
     tabHiders.className = `maejok-settings_tab-content_hiders`;
     tabHiders.name = 'hiders'
 
-    // const tabUpdates = document.createElement('div');
-    // tabUpdates.className = `maejok-settings_tab-content_updates`;
-    // tabUpdates.name = 'updates'
+    const tabFriends = document.createElement('div');
+    tabFriends.className = `maejok-settings_tab-content_friends`;
+    tabFriends.name = 'friends'
 
     const tabAbout = document.createElement('div');
     tabAbout.className = `maejok-settings_tab-content_about`;
@@ -273,7 +287,7 @@
 
     settingsPanel.appendChild(tabMain)
     settingsPanel.appendChild(tabHiders)
-    // settingsPanel.appendChild(tabUpdates)
+    settingsPanel.appendChild(tabFriends)
     settingsPanel.appendChild(tabAbout)
 
     // ABOUT
@@ -287,10 +301,10 @@
     const enableRecentChatters = createCheckbox('Enable Chatter Count', 'enableRecentChatters', ['prompt', 'Threshold', 'How long should someone be considered active in chat? (in minutes) (Default: 10)', 'chattersThreshold', 'min.']);
     tabMain.appendChild(enableRecentChatters);
 
-    const enableBigChat = createCheckbox('Big Chat Mode', 'enableBigChat', ['help', ' ? ', 'Hit CTRL+` or CTRL+SHIFT+SPACE to toggle']);
+    const enableBigChat = createCheckbox('Big Chat Mode', 'enableBigChat', ['help', ' ? ', 'Hit CTRL+` or CTRL+SHIFT+SPACE to toggle.\nToggles between "MidChat", "BigChat", and Normal.\nToggle once for MidChat, twice for BigChat, and thrice to go back to the original layout']);
     tabMain.appendChild(enableBigChat);
 
-    const persistBigChat = createCheckbox('Persist Big Chat State', 'persistBigChat', ['help', ' ? ', 'Remembers which state Big Chat was in last time you left the site and returns to that state on page load']);
+    const persistBigChat = createCheckbox('Persist Big Chat State', 'persistBigChat', ['help', ' ? ', 'Remembers which state BigChat is in when you leave the site and returns you to that state on the next visit']);
     tabMain.appendChild(persistBigChat);
 
     const showTimerBigChat = createCheckbox('Show Countdown in Big Chat Mode', 'showTimerBigChat', ['help', ' ? ', 'Hides or shows the countdown timer when Big Chat is enabled']);
@@ -316,31 +330,38 @@
     const disableTimestamps = createCheckbox('Hide Timestamps', 'disableTimestamps', ['help', ' ? ', 'Hides timestamps in chat']);
     tabHiders.appendChild(disableTimestamps);
 
-    const disableChatClans = createCheckbox('Hide Clans', 'disableChatClans', ['help', ' ? ', 'Hides chatters clans tags in chat']);
+    const disableChatClans = createCheckbox('Hide Clans', 'disableChatClans', ['help', ' ? ', 'Hides clans tags in chat']);
     tabHiders.appendChild(disableChatClans);
 
-    const disableLevels = createCheckbox('Hide Levels', 'disableLevels', ['help', ' ? ', 'Hides chatters levels in chat']);
+    const disableLevels = createCheckbox('Hide Levels', 'disableLevels', ['help', ' ? ', 'Hides levels in chat']);
     tabHiders.appendChild(disableLevels);
 
-    const disableAvatars = createCheckbox('Hide Avatars', 'disableAvatars', ['help', ' ? ', 'Hides chatters avatars in chat']);
+    const disableAvatars = createCheckbox('Hide Avatars', 'disableAvatars', ['help', ' ? ', 'Hides avatars in chat']);
     tabHiders.appendChild(disableAvatars);
 
     const disableEmotes = createCheckbox('Hide Emotes', 'disableEmotes', ['help', ' ? ', 'Hides all emotes in chat']);
     tabHiders.appendChild(disableEmotes);
 
-    const disableMedals = createCheckbox('Hide Medals', 'disableMedals', ['help', ' ? ', 'Hides all medals in chat.  If only medals are sent, the entire message is hidden']);
+    const disableMedals = createCheckbox('Hide Medals', 'disableMedals', ['help', ' ? ', 'Hides all medals in chat.  If only medals are sent, the entire message is removed']);
     tabHiders.appendChild(disableMedals);
 
-    const disableHappenings = createCheckbox('Hide Happenings', 'disableHappenings', ['help', ' ? ', 'Hides all notices for consumables (inventory items) notices in chat']);
+    const disableHappenings = createCheckbox('Hide Happenings', 'disableHappenings', ['help', ' ? ', 'Hides all notices for consumables (inventory items) and other event notices in chat']);
     tabHiders.appendChild(disableHappenings);
 
     const disableSystemMessages = createCheckbox('Hide System Messages', 'disableSystemMessages', ['help', ' ? ', 'Hides all room joins, clan/clanless attacks, War Toys, etc. from chat']);
     tabHiders.appendChild(disableSystemMessages);
 
-    const enableUpdateChecks = createCheckbox('Allow plugin to check for updates', 'enableUpdateChecks', ['prompt', 'Frequency', 'How many minutes between update checks? (in minutes) (Default: 30) Note: This will also enable update checks on every page load.', 'updateCheckFrequency', 'min.']);
+    const enableUpdateChecks = createCheckbox('Check for updates', 'enableUpdateChecks', ['prompt', 'Frequency', 'How many minutes between update checks? (Default: 30) Note: This will also check for new versions on every page load.', 'updateCheckFrequency', 'min.']);
     tabMain.appendChild(enableUpdateChecks);
 
     // save button
+
+    const saveButtonContainer = document.createElement('div');
+    saveButtonContainer.style.width = '50%';
+    saveButtonContainer.style.marginRight = 'auto';
+    saveButtonContainer.style.marginLeft = 'auto';
+    form.appendChild(saveButtonContainer);
+
     const saveButton = document.createElement('button');
     saveButton.classList.add('console-button-long_console-button-long__G6irT');
     saveButton.classList.add('console-button-long_lg__hdQwz');
@@ -367,11 +388,19 @@
     saveButton.appendChild(saveButtonImage);
     saveButton.appendChild(saveButtonText);
 
-    form.appendChild(saveButton);
+    saveButtonContainer.appendChild(saveButton);
 
     modalBody.appendChild(form);
 
-    document.getElementById('tagUserLink').addEventListener('click', () => {
+    lists.friends.reverse();
+    createListsPane(tabFriends, 'friends');
+    lists.friends.forEach(user => addToSettingsList(user, 'friends'));
+
+    lists.watching.reverse();
+    createListsPane(tabFriends, 'watching');
+    lists.watching.forEach(user => addToSettingsList(user, 'watching'));
+
+    document.getElementById('tagUserLink').addEventListener('click', () => { //about page
       tagUser('maejok');
     });
 
@@ -497,6 +526,149 @@
     return inputInput
   }
 
+
+  // FRIENDS / LISTS
+  function createListsPane(element, list) {
+    const bg = splitHexA(lists.colors[list].color);
+    const border = splitHexA(lists.colors[list].border);
+    element.classList.add('maejok-settings-lists');
+    const newPane = document.createElement('div');
+    newPane.classList.add('maejok-settings-lists-pane')
+    newPane.innerHTML = `
+    <h2>${list}</h2>
+    <div class="maejok-settings-lists-list_input_group">
+      <div class="maejok-settings-lists-list_input-color_label">Background</div>
+      <div id="${list}_bg_wrapper">
+        <input id="${list}_bg_color" type="color" value="${bg.hex}">
+        <input id="${list}_bg_alpha" type="range" min="0" max="255" step="1" value="${bg.alpha}" />
+      </div>
+    </div>
+    <div class="maejok-settings-lists-list_input_group">
+      <div class="maejok-settings-lists-list_input-color_label">Border</div>
+      <div id="${list}_border_wrapper">
+        <input id="${list}_border_color" type="color" value="${border.hex}">
+        <input id="${list}_border_alpha" type="range" min="0" max="255" step="1" value="${border.alpha}" />
+      </div>
+    </div>
+    <div class="maejok-settings-lists-list_input_group">
+      <div id="maejok-lists-${list}_input" class="maejok-settings-lists-list_input lists-name_input" contentEditable="true"></div>
+      <button id="maejok-lists-${list}_add_btn" class="maejok-settings-lists-list_btn">Add</button>
+    </div>
+    <div id="maejok-settings-lists-${list}-list" class="maejok-settings-lists-list"></div>
+    `;
+    element.appendChild(newPane)
+
+    const inputFields = newPane.querySelectorAll(`[class^="maejok-settings-lists-list_input"]`);
+    const addButton = document.getElementById(`maejok-lists-${list}_add_btn`);
+
+    let bgWrapper = document.querySelector(`#${list}_bg_wrapper`);
+    let bgColor = document.querySelector(`#${list}_bg_color`);
+    let bgAlpha = document.querySelector(`#${list}_bg_alpha`);
+    bgWrapper.style.backgroundColor = lists.colors[list].color;
+    bgWrapper.style.border =  `1px solid ${lists.colors[list].border}`;
+    bgColor.addEventListener('input', (event) => setListColors(event.target, list, 'bg') );
+    bgAlpha.addEventListener('input', (event) => setListColors(event.target, list, 'bg'));
+
+    let borderWrapper = document.querySelector(`#${list}_border_wrapper`);
+    let borderColor = document.querySelector(`#${list}_border_color`);
+    let borderAlpha = document.querySelector(`#${list}_border_alpha`);
+    borderWrapper.style.border =  `1px solid ${lists.colors[list].border}`;
+    borderWrapper.style.backgroundColor = lists.colors[list].color;
+    borderColor.addEventListener('input', (event) => setListColors(event.target, list, 'border') );
+    borderAlpha.addEventListener('input', (event) => setListColors(event.target, list, 'border'));
+
+    inputFields.forEach(input => {
+      input.addEventListener("keypress", (event) => {
+        const id = event.target.id
+        const item = event.target.textContent.trim();
+        const list = event.target.id.replace(/maejok-lists-(\w+)_input/, '$1');
+        if (item.length >= 3 && event.key === "Enter") addToList(item, list);
+        if (event.key === "Enter") event.preventDefault();
+      });
+    });
+
+    addButton.addEventListener("click", (event) => {
+      const list = event.target.id.replace(/maejok-lists-(\w+)_add_btn/, '$1');
+      const item = event.target.previousElementSibling.textContent;
+      if (item.length >= 3) addToList(item, list);
+      event.target.previousElementSibling.focus();
+      event.preventDefault();
+    });
+
+  }
+
+  function setListColors(el, list, bgorbord){
+    let color_wrapper=document.querySelector(`#${list}_${bgorbord}_wrapper`);
+    let color_picker = document.querySelector(`#${list}_${bgorbord}_color`);
+    let color_picker_alpha = document.querySelector(`#${list}_${bgorbord}_alpha`);
+    let rgbaColor = color_picker.value + (color_picker_alpha.value == 255 ? "" : parseInt(color_picker_alpha.value).toString(16).padStart(2, "0"));
+    color_wrapper.style.backgroundColor = rgbaColor;
+    if (bgorbord == 'bg') lists.colors[list].color = rgbaColor;
+    if (bgorbord == 'border') lists.colors[list].border = rgbaColor;
+
+    const items = document.querySelectorAll(`[class*="${list}-list_item"]`)
+    if (items.length !== 0){
+      items.forEach(item => {
+        if (bgorbord == 'bg') item.style.backgroundColor = rgbaColor;
+        if (bgorbord == 'border') item.style.border = `1px solid ${rgbaColor}`;
+      });
+    }
+  }
+
+  function addToSettingsList(item, list) {
+    const parent = document.getElementById(`maejok-settings-lists-${list}-list`);
+    const exists = document.getElementById(`${list}-list_item-${item}`);
+
+    if (exists) return;
+    const div = document.createElement('div');
+    div.id = `${list}-list_item-${item}`;
+    div.style.backgroundColor = lists.colors[list].color;
+    div.style.border =  `1px solid ${lists.colors[list].border}`;
+    div.innerHTML = `
+      <span class="maejok-settings-lists-list_item_name">${item}</span>
+      <span id="${div.id}-delete" class="maejok-settings-lists-list_item_x" onmouseover="this.textContent ='💀'" onmouseout="this.textContent = '❌'">❌</span>
+    `;
+    div.classList.add('maejok-settings-lists-list_item');
+    div.classList.add(`${list}-list_item`);
+
+    parent.insertBefore(div, parent.firstChild);
+
+    document.getElementById(`${div.id}-delete`).addEventListener('click', function() {
+      removeFromSettingsList(this, list);
+    });
+  }
+
+  function removeFromSettingsList(element, list) {
+    const item = element.parentElement.querySelector(".maejok-settings-lists-list_item_name").textContent;
+    if (lists[list].includes(item)) {
+      const slideAway = (list == 'friends') ? 'slide-away-left' : 'slide-away-right';
+      element.parentElement.classList.add(slideAway);
+      removeFromList(item, list);
+      setTimeout(()=>element.parentElement.remove(), 275)
+    }
+  }
+
+  function addToList(item, list) {
+    const input = document.getElementById(`maejok-lists-${list}_input`);
+    input.textContent = '';
+    if (!lists[list].includes(item.trim())) {
+      addToSettingsList(item.trim(), list)
+      lists[list] = [item.trim(),...lists[list]];
+
+      config.set(list, lists[list]);
+    }
+    playSound('click-high-short');
+  }
+
+  function removeFromList(item, list) {
+    const index = lists[list].indexOf(item.trim());
+    if (index !== -1) {
+       lists[list].splice(index, 1);
+       config.set(list, lists[list]);
+    }
+    playSound('click-high-short');
+  }
+
   function createFriendButton() {
     let tries = 0;
     const button = document.createElement('button');
@@ -533,19 +705,21 @@
 
 
   // TOGGLES
-  let isBigChat = false;
-  function toggleBigChat() {
+  let isBigChat = 0;
+  function toggleBigChat(state = null) {
     if (!isPageLoaded || !config.get('enableBigChat')) return;
-    isBigChat = !isBigChat;
+    isBigChat = (state != null) ? state : (isBigChat + 1) % 3;
+
     if (config.get('persistBigChat')) {
       config.set('bigChatState', isBigChat);
       config.save()
     }
+
     playSound('shutter');
     const chatBoxElement = document.querySelector(`[class*="${classes.chatBox}"]`);
     const chatMessagesElement = document.querySelector(`[class*="${classes.chatMessages}"]`);
     const chatInputFormElement = document.querySelector(`[class*="${classes.chatInputForm}"]`);
-    const chatChatterCountElement = document.querySelector(`.maejok-chatterCount`);
+    const chatChatterCountElement = document.querySelector(`.${classes.chatterCount}`);
     const xpBarElement = document.querySelector(`[class*="${classes.xpBar}"]`);
     const topBarElement = document.querySelector(`[class*="${classes.topBar}"]`);
     const topBarUserElement = document.querySelector(`[class*="${classes.topBarUser}"]`);
@@ -553,19 +727,34 @@
     const topBarLogoElement = document.querySelector(`[class*="${classes.topBarLogo}"]`);
     const happeningMessageElement = document.querySelector(`[class*="${classes.happeningMessage}"]`);
     const countDownTimerElement = document.querySelector(`[class*="${classes.countDownTimer}"]`);
+    const secondaryPanel = document.querySelector(`[class^="${classes.secondaryPanel}"]`);
     const mobileNavPanel = document.querySelector(`[class^="${classes.mobileNavPanel}"]`);
 
     if (chatBoxElement) {
-      chatBoxElement.classList.toggle('mTS2-chatBox-BigChat', isBigChat);
-      chatMessagesElement.classList.toggle('mTS2-chatMessages-BigChat', isBigChat);
-      chatInputFormElement.classList.toggle('mTS2-chatInput-BigChat', isBigChat);
-      chatChatterCountElement.classList.toggle('mTS2-chatters-BigChat', isBigChat);
-      xpBarElement.classList.toggle('mTS2-xpBar-BigChat', isBigChat);
-      topBarElement.classList.toggle('mTS2-topBar-BigChat', isBigChat);
-      topBarUserElement.classList.toggle('mTS2-topBarUser-BigChat', isBigChat);
-      topBarTitleElement.classList.toggle('mTS2-topBarTitle-BigChat', isBigChat);
-      topBarLogoElement.classList.toggle('mTS2-topBarLogo-BigChat', isBigChat);
-      mobileNavPanel.classList.toggle('mTS2-mobileNavPanel-BigChat', isBigChat);
+      console.log(isBigChat);
+
+      chatBoxElement.classList.toggle('mTS2-chatBox-BigChat-1', isBigChat === 1);
+      chatBoxElement.classList.toggle('mTS2-chatBox-BigChat-2', isBigChat === 2);
+
+      topBarLogoElement.classList.toggle('mTS2-topBarLogo-BigChat-1', isBigChat === 1);
+      topBarLogoElement.classList.toggle('mTS2-topBarLogo-BigChat-2', isBigChat === 2);
+
+      topBarTitleElement.classList.toggle('mTS2-topBarTitle-BigChat-1', isBigChat === 1);
+      topBarTitleElement.classList.toggle('mTS2-topBarTitle-BigChat-2', isBigChat === 2);
+
+      topBarUserElement.classList.toggle('mTS2-topBarUser-BigChat-1', isBigChat !== 0);
+
+      topBarElement.classList.toggle('mTS2-topBar-BigChat', isBigChat === 2);
+
+      xpBarElement.classList.toggle('mTS2-xpBar-BigChat-1', isBigChat === 1);
+      xpBarElement.classList.toggle('mTS2-xpBar-BigChat-2', isBigChat === 2);
+
+      mobileNavPanel.classList.toggle('mTS2-mobileNavPanel-BigChat', isBigChat !== 0);
+
+      // chatMessagesElement.classList.toggle('mTS2-chatMessages-BigChat', isBigChat);
+      // chatInputFormElement.classList.toggle('mTS2-chatInput-BigChat', isBigChat);
+      // chatChatterCountElement.classList.toggle('mTS2-chatters-BigChat', isBigChat);
+      // secondaryPanel.classList.toggle('mTS2-secondaryPanel-BigChat', isBigChat);
 
       if (config.get('showTimerBigChat')) countDownTimerElement?.classList.toggle('mTS2-countdown-BigChat-show', isBigChat);
       if (!config.get('showTimerBigChat')) countDownTimerElement?.classList.toggle('mTS2-countdown-BigChat-hide', isBigChat);
@@ -661,7 +850,6 @@
     });
   }
 
-  let chattersList = [];
   function initRecentChatters() {
     const elmName = `maejok-chatter_count`;
     const chatHeader = document.querySelector(`[class*="${classes.chatPresence}"]`);
@@ -681,7 +869,7 @@
     chatPresence.appendChild(chattersCount);
     chatPresence.appendChild(chattersText);
 
-    chattersCount.addEventListener('mouseup', (event)=>{ showChattersList(event) });
+    chattersCount.addEventListener('mouseup', (event)=>{ showChattersList(event); console.log(event.target); });
   }
 
   function showChattersList(event) {
@@ -692,27 +880,42 @@
     const chatHeader = document.querySelector(`.maejok-chatter_count`);
     const chatUserList = document.createElement('div');
     chatUserList.classList.add(`maejok-chatter_count-chatters`);
-    chatUserList.style.top = `${event.clientY}px`;
-    chatUserList.style.left = `${event.clientX-90}px`;
+
+    if (isBigChat) {
+      chatUserList.style.top = `${event.clientY+3}px`;
+      chatUserList.style.left = `${event.clientX-56}px`;
+    } else {
+      chatUserList.style.top = `${event.clientY+10}px`;
+      chatUserList.style.left = `${event.clientX-150}px`;
+    }
 
     document.body.appendChild(chatUserList);
-    if (chattersList.length === 0){
+    if (lists.chatters.length === 0){
       const chatterDiv = document.createElement('div');
       chatterDiv.classList.add(`maejok-chatter_count-chatter`);
       chatterDiv.innerText = "Ain't nobody hurr!";
       chatUserList.appendChild(chatterDiv);
     }else{
-      chattersList.forEach(chatter => {
+      lists.chatters.forEach(chatter => {
+        const friends = config.get('friends');
+        const highlighted = config.get('highlighted');
+        const username = chatter.user ? `<span style="margin-right: 100px;">${chatter.user}</span>` : '';
+        const clan = chatter.clan ? `<span style="position: absolute; right: 6px;">[${chatter.clan}]</span>` : '';
         const chatterDiv = document.createElement('div');
         chatterDiv.classList.add(`maejok-chatter_count-chatter`);
-        chatterDiv.innerText = chatter.user;
+        chatterDiv.innerHTML = `${username}${clan}`;
+        if (friends.includes(chatter.user)) {
+          chatterDiv.style.color = "rgb(0, 175, 0)";
+        } else if (highlighted.includes(chatter.user)){
+          chatterDiv.style.color = "rgb(100, 0, 0)";
+        }
         chatUserList.appendChild(chatterDiv);
       });
     }
     chatUserList.classList.add('maejok-chatter_count-chatters-show');
   }
 
-  function updateChattersList(user, array, reset = false) {
+  function updateChattersList(user, clan, array, reset = false) {
     if (reset) array = [];
     const currentTime = new Date().getTime();
     const thresholdTime = currentTime + config.get('chattersThreshold') * 60 * 1000;
@@ -722,10 +925,18 @@
     if (existingUser) {
       existingUser.expires = thresholdTime;
     } else {
-      array.push({ user, expires: thresholdTime });
+      array.push({ user, clan, expires: thresholdTime });
     }
 
     removeExpiredUsers(array, currentTime);
+
+    array.sort((a, b) => {
+      const userA = a.user.toLowerCase();
+      const userB = b.user.toLowerCase();
+      if (userA < userB) return -1;
+      if (userA > userB) return 1;
+      return 0;
+    });
 
     setChatterCount(array.length);
   }
@@ -771,9 +982,8 @@
   }
 
   function handleCloseChattersList(event) {
-    const chatters = document.querySelector(`.maejok-chatter_count`);
     const chattersListElm = document.querySelector(`.maejok-chatter_count-chatters`);
-    if (!chatters.contains(event.target) && chattersListElm) chattersListElm.remove('maejok-chatter_count-chatters-show');
+    if (!hasClass(event.target, 'maejok-chatter_count-count') && chattersListElm) chattersListElm.remove('maejok-chatter_count-chatters-show');
   }
 
   function handleHighlightUserEvent(event) {
@@ -919,22 +1129,37 @@
     return userInput || false
   }
 
+  function hexaToRGBA(hexColor, opacity) {
+    const alpha = opacity / 255;
+    const alphaRounded = parseFloat(alpha.toFixed(2));
+    const red = parseInt(hexColor.slice(1, 3), 16);
+    const green = parseInt(hexColor.slice(3, 5), 16);
+    const blue = parseInt(hexColor.slice(5, 7), 16);
+    const rgbaColor = `rgba(${red}, ${green}, ${blue}, ${alphaRounded})`;
+    return rgbaColor;
+  }
+
   function saveConfig(closeModal = true) {
     const form = document.querySelector('.maejok-settings_form');
     if (form) {
       const inputElements = form.querySelectorAll('input');
+
       inputElements.forEach((input) => {
+        let settingKey = input.id.replace("maejok-", "");
         if (input.type === 'checkbox') {
-          let settingKey = input.id.replace("maejok-", "");
           let value = input.checked ? true : false
           config.set(settingKey, value);
           // console.log(settingKey, value);
-        } else if (input.type === 'hidden') {
-          let settingKey = input.id.replace("maejok-", "");
-          config.set(settingKey, input.value);
-          // console.log(settingKey, input.value);
         }
       });
+
+      // console.log(hexaToRGBA(bg.color, bg.alpha));
+
+      console.log(lists.colors);
+      config.set('friends', lists.friends);
+      config.set('highlighted', lists.watching);
+      console.log(lists.colors);
+      config.set('colors', lists.colors);
     }
     config.save();
     chatMutationObserver.disconnect();
@@ -943,6 +1168,7 @@
     if (closeModal) {
       handleCloseModalEvent();
       startUpdateChecker();
+      if (openSettingsBigChatState) toggleBigChat();
     }
   }
 
@@ -951,6 +1177,13 @@
     chatMessageList.scrollTop = chatMessageList.scrollHeight;
   }
 
+  function splitHexA(hexWithOpacity){
+    const hexPattern = /^#([0-9A-Fa-f]{6})([0-9A-Fa-f]{2})$/;
+    if (!hexPattern.test(hexWithOpacity)) return { hex: "#000000", number: 255 };
+    const rgbPart = hexWithOpacity.match(hexPattern)[1];
+    const opacityPart = parseInt(hexWithOpacity.match(hexPattern)[2], 16);
+    return { hex: `#${rgbPart}`, alpha: opacityPart };
+  }
 
 
   // UPDATE
@@ -990,7 +1223,6 @@
   function checkVersion(callback) {
     const ts = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
     fetch(`https://raw.githubusercontent.com/maejok-xx/MAEJOK-TOOLS-FISHTANK/main/version.txt?cb=${ts}`)
-    // fetch(`https://gist.githubusercontent.com/maejok-xx/50849b97b7262f19e40ebef6262d919f/raw/version.txt?cb=${ts}`)
       .then(response => {
         if (!response.ok) {
           throw new Error(`MAEJOK-TOOLS :: Update Checker failed with status: ${response.status}`);
@@ -1029,8 +1261,9 @@
 
   function insertChangelog() {
       sessionStorage.removeItem('maejok-showChangelog');
-      insertChatMessage(`<div id="maejok-changelog" style="animation:notice-me.3s 7;margin:4px;cursor:pointer;margin-top:10px;text-align:center;padding:10px"><h2 style="font-size:1.2rem;margin:0;color:#f07">MAEJOK-TOOLS</h2><p style="font-size:1rem;color:#fff"><b>Has been updated to v${VERSION}!</b></p><div style="text-align:center;margin:5px 0 5px;font-size:.8rem;color:#fff">[ <a class="maejok-update" href="https://github.com/maejok-xx/MAEJOK-TOOLS-FISHTANK/blob/main/changelogs/${VERSION}.md" target="_blank">view change log</a> - <a class="maejok-update" href="#" onclick="event.preventDefault();document.getElementById('maejok-changelog').remove();">dismiss</a> ]</div></div>`);
+      insertChatMessage(`<div id="maejok-changelog" style="animation:notice-me.3s 7;margin:4px;cursor:pointer;margin-top:10px;text-align:center;padding:10px"><h2 style="font-size:1.2rem;margin:0;color:#f07">MAEJOK-TOOLS</h2><p style="font-size:1rem;color:#fff"><b>Has been updated to v${VERSION}!</b></p><div style="text-align:center;margin:5px 0 5px;font-size:.8rem;color:#fff">[ <a class="maejok-update" href="https://github.com/maejok-xx/MAEJOK-TOOLS-FISHTANK/blob/main/changelog.md" target="_blank">view change log</a> - <a class="maejok-update" href="#" onclick="event.preventDefault();document.getElementById('maejok-changelog').remove();">dismiss</a> ]</div></div>`);
   }
+
 
   // OBSERVERS
   let chatMutationObserver = null;
@@ -1069,17 +1302,28 @@
     });
 
     // HIGHLIGHT
-    const highlighted = config.get('highlighted');
-    const friends = config.get('friends');
     const messages = document.querySelectorAll(`[class*="${classes.chatMessageOuter}"]`);
     messages.forEach(element => {
       const userElm = element.querySelector(`[class*="${classes.chatUsername}"]`);
+      let username = '';
       if (userElm) {
-        const username = userElm.innerHTML.replace(/<span[^>]*>.*?<\/span>/, '');
-        const highlightedIndex = highlighted.indexOf(username);
-        const friendIndex = friends.indexOf(username);
-        (highlightedIndex !== -1) ? element.classList.add('maejok-highlighted-user') : element.classList.remove('maejok-highlighted-user');
-        (friendIndex !== -1) ? element.classList.add('maejok-friend-user') : element.classList.remove('maejok-friend-user');
+        username = userElm.innerHTML.replace(/<span[^>]*>.*?<\/span>/, '');
+
+        if (lists.friends.includes(username)) {
+          element.style.backgroundColor = config.get('colors').friends.color
+          element.style.border = `1px solid ${config.get('colors').friends.border}`;
+        }else{
+          element.style.backgroundColor = '';
+          element.style.border = '';
+        }
+
+        if (lists.watching.includes(username)){
+           element.style.backgroundColor = config.get('colors').watching.color
+           element.style.border = `1px solid ${config.get('colors').watching.border}`;
+        } else {
+          if (!lists.friends.includes(username)) element.style.backgroundColor = '';
+          if (!lists.friends.includes(username)) element.style.border = '';
+        }
       }
     });
 
@@ -1094,27 +1338,24 @@
 
           // update chatters list / highlight users
           const userElm = addedNode.querySelector(`[class*="${classes.chatUsername}"]`);
+          const clanElm = addedNode.querySelector(`[class*="${classes.chatUsername}"] span`)?.innerHTML;
           let username = '';
+          let clan = '';
           if (userElm) {
             username = userElm.innerHTML.replace(/<span[^>]*>.*?<\/span>/, '');
+            clan = clanElm ? clanElm?.replace(/\[|\]/g, '') : null;
             if (config.get('enableRecentChatters')) {
-                updateChattersList(username, chattersList);
+                updateChattersList(username, clan, lists.chatters);
             }
 
             // HIGHLIGHT USERS
-            const highlighted = config.get('highlighted');
-            const highlightedIndex = highlighted.indexOf(username);
-            if (highlightedIndex !== -1) {
-              addedNode.classList.add('maejok-highlighted-user')
-            }else{
-              addedNode.classList.remove('maejok-highlighted-user');
+            if (lists.friends.includes(username)){
+              addedNode.style.backgroundColor = config.get('colors').friends.color;
+              addedNode.style.border = `1px solid ${config.get('colors').friends.border}`;
             }
-            const friends = config.get('friends');
-            const friendsIndex = friends.indexOf(username);
-            if (friendsIndex !== -1) {
-              addedNode.classList.add('maejok-friend-user')
-            }else{
-              addedNode.classList.remove('maejok-friend-user');
+            if (lists.watching.includes(username)) {
+              addedNode.style.backgroundColor = config.get('colors').watching.color;
+              addedNode.style.border = `1px solid ${config.get('colors').watching.border}`;
             }
           }
 
@@ -1122,7 +1363,7 @@
           let systemMessage = addedNode.querySelector(`[class*="${classes.chatSystem}"] div`);
           if (systemMessage) {
             const msg = systemMessage.textContent;
-            if (msg.includes('Joined ')) updateChattersList(my.name, chattersList, true);
+            if (msg.includes('Joined ')) updateChattersList(my.name, my.clan, lists.chatters, true);
           }
           // end clear chatters
 
@@ -1204,6 +1445,11 @@
       enableClickHighlightUsers: true,
       highlighted: [],
       friends: [],
+      colors: {
+        friends: { color: '#10ad5c1f', border: '#00ff0418' },
+        watching: { color: '#f31b1b18', border: '#dd13132f' },
+        v: 1
+      },
       agreementAccepted: false,
     };
 
@@ -1216,9 +1462,16 @@
     const load = () => {
       const storedSettings = JSON.parse(localStorage.getItem('s2_maejoktools-settings'));
       if (!storedSettings) return
-      for (const key in storedSettings) {
-        if (settings.hasOwnProperty(key)) { settings[key] = storedSettings[key]; }
+
+      if (!storedSettings.colors || Object.keys(storedSettings.colors).length === 0 || storedSettings.colors.v !== 1) {
+        storedSettings.colors = { ...settings.colors };
       }
+
+      for (const key in storedSettings) settings[key] = (settings.hasOwnProperty(key)) && storedSettings[key];
+
+      lists.friends = storedSettings.friends;
+      lists.watching = storedSettings.highlighted;
+      lists.colors = storedSettings.colors;
     };
 
     const save = () => {
@@ -1231,8 +1484,8 @@
 
     return { get, set, load, save };
   };
-
   const config = initConfig();
+
 
   let isPageLoaded = false;
   let my = { name: null, clan: null }
@@ -1267,11 +1520,12 @@
         sessionStorage.getItem('maejok-showChangelog') ? insertChangelog() : null;
 
         if (config.get('persistBigChat')) {
-          setTimeout(() => { if (config.get('bigChatState')) toggleBigChat(); }, 500);
+          setTimeout(() => { if (config.get('bigChatState')) toggleBigChat(config.get('bigChatState')); }, 500);
         }
       }
     }, 10);
   }
+
 
   config.load();
   config.get('agreementAccepted') === VERSION ? start() : runAgreement();
@@ -1287,221 +1541,509 @@
     }
   }
 
+
   // STYLES
-  GM_addStyle(`
-        .maejok-about a,
-        .maejok-about a:visited {
-          text-decoration: none;
-          font-weight: 600;
-          color: #11f8ff
-        }
+  GM_addStyle(
+    `.modal_body__j3Bav {
+        overflow-x: hidden !important;
+      }
 
-        .maejok-about .container {
-          background-color: rgba(0,0,0,0.35);
-          padding: 25px;
-        }
+      .slide-away-right {
+        transform: translateX(100%);
+      }
 
-        .maejok-about h1 {
-          text-align: center;
-          margin-bottom: 20px;
-          color: rgb(200, 0, 200);
-        }
+      .slide-away-left {
+        transform: translateX(-100%);
+      }
 
-        .maejok-about p {
-          margin: 0 0 20px;
-          color: white;
-        }
+      .maejok-settings-lists-pane h2 {
+        font-size: 1.24em;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+      }
 
-        .maejok-settings_tab-content {
-          // display: none;
-          color: white;
-        }
+      .maejok-settings-panel {
+        min-width: 490px;
+        min-height: 350px;
+        max-height: 100vh;
+        margin-bottom: 15px;
+      }
 
-        .maejok-settings_tab-bar {
-          display: flex;
-          gap: 2px;
-          margin-bottom: 20px;
-        }
+      .maejok-settings-lists {
+        display: inline-flex;
+        column-gap: 5px;
+        max-height: calc(100vh - 275px);
+      }
 
-        .maejok-settings_tab-button {
-          flex: 1;
-          border: none;
-          cursor: pointer;
-          width: 100px;
-          text-transform: uppercase;
-        }
+      .maejok-settings-lists-pane {
+        font-size: 0.8em;
+        background-color: #121314;
+        padding: 15px;
+        overflow-y: auto;
+      }
 
-        .maejok-chatter_count {
-          position: relative;
-          display: inline-block;
-          padding: 5px;
-          cursor: pointer;
-        }
+      .maejok-settings-lists-list {
+        margin-top: 10px;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
 
-        .maejok-chatter_count-chatters {
-          display: none;
-          position: absolute;
-          height: auto;
-          width: 200px;
-          max-height: 300px;
-          overflow-y: auto;
-          overflow-x: hidden;
-          z-index: 10;
-          // background-color: #111;
-          // padding: 2px;
-        }
+      .maejok-settings-lists-list_item_name {
+        word-wrap: break-word;
+        position: relative;
+      }
 
-        .maejok-chatter_count-chatter {
-          padding: 5px;
-          color: #eee;
-          background-color: #444;
-          width: 200px;
-          border-bottom: 1px solid #333;
-        }
-        .maejok-chatter_count-chatter:hover {
-          color: #f0c841;
-          background-color: #444;
-          border-left: 3px solid white;
-          cursor: pointer;
-        }
+      .maejok-settings-lists-list_item {
+        padding: 4px;
+        transition: transform 0.3s ease;
+      }
 
-        .maejok-chatter_count-chatters-show {
-          display: block;
-        }
+      .maejok-settings-lists-list_item:hover {
+        mix-blend-mode: difference;
+      }
 
-        .maejok-update,
-        .maejok-update:visited {
-          text-decoration: none;
-          color: #11f8ff;
-        }
+      .maejok-settings-lists-list_item_x {
+        display: none;
+        float: right;
+        cursor: pointer;
+        padding: 4px;
+      }
 
-        .maejok-highlighted-user{
-          background-color: rgba(245, 39, 39, 0.16)!important;
-          border: 1px solid rgba(245, 39, 39, 0.26)!important;
-        }
+      .maejok-settings-lists-list_item:hover .maejok-settings-lists-list_item_x {
+        display: inline-block;
+      }
 
-        .maejok-friend-user{
-          background-color: rgba(39, 245, 39, 0.06);
-          border: 1px solid rgba(39, 245, 39, 0.16);
-        }
+      .maejok-settings-lists-list_item_x:hover {
+        transform: scale(1.3);
+        transition: transform 0.15s ease-in-out;
+      }
 
-        .mTS2-chatBox-BigChat {
-          top: 0!important;
-          left: 0!important;
-          z-index: 1!important;
-          width: 100%!important;
-          height: 100%!important;
-          position: fixed!important;
-        }
 
-        .mTS2-countdown-BigChat-hide {
-            z-index: -2!important;
-        }
+      .maejok-settings-lists-list_item_name {
+        padding: 5px 8px;
+        display: inline-block;
+        cursor: pointer;
+        margin: 0;
+        transform: scale(1.01);
+        transition: transform 0.25s ease-in-out;
+      }
 
-        .mTS2-countdown-BigChat-show {
-            z-index: 4!important;
-        }
+      .maejok-settings-lists-list_input_group {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        margin-bottom: -1px;
+      }
 
-        .mTS2-chatters-BigChat {
-            position: absolute;
-            left: 100px;
-        }
+      .maejok-settings-lists-list_input-color_label {
+        width: 125px;
+        margin-top: 3px;
+        margin-bottom: 10px;
+      }
 
-        .mTS2-chatMessages-BigChat {
-            height: 81%!important;
-            border: 0!important;
-            padding: 0!important;
-            margin-bottom: 0!important;
-            background-color: rgba(0, 0, 0, 0.0)!important;
-        }
+      .maejok-settings-lists-list_input.lists-name_input:empty:before {
+        content: "Username (exactly)";
+        color: rgb(255 255 255 / 50%);
+        font-style: italic;
+        width: 225px;
+      }
 
-        .mTS2-chatInput-BigChat {
-            margin-left: 6px!important;
-            margin-right: 6px!important;
-        }
+      .maejok-settings-lists-list_input.lists-name_input {
+        color: rgb(255 255 255 / 80%);
+        font-style: regular;
+        width: 225px;
+      }
 
-        .mTS2-xpBar-BigChat {
-          z-index: 20!important;
-          margin-top: 40px!important;
-            width: calc(100% + 170px)!important;
-        }
+      .maejok-settings-lists-list_input {
+        background-color: rgb(25, 25, 25);
+        border: 1px solid rgb(0, 0, 0);
+        border-left: 0px;
+        flex: 3;
+        padding: 7px;
+        white-space: nowrap;
+        overflow: hidden;
+        font-size: 14px;
+        width: 175px;
+      }
 
-        .mTS2-topBarUser-BigChat {
-            visibility: hidden!important;
-        }
+      .lists-color_input {
+        background-color: unset;
+        padding: 7px;
+      }
 
-        .mTS2-topBarTitle-BigChat {
-            z-index: 22!important;
-        }
+      .lists-color_input:empty:before {
+        content: "eg: rgba(39, 245, 39, 0.06)";
+        color: rgb(255 255 255 / 28%);
+        font-style: italic;
+      }
 
-        .mTS2-topBar-BigChat {
-            z-index: 22!important;
-        }
+      .maejok-settings-lists-list_input:focus {
+        outline: none;
+      }
 
-        .mTS2-topBarLogo-BigChat {
-            margin-top: -34px!important;
-            margin-left: 140px!important;
-        }
+      .maejok-settings-lists-list_btn {
+        flex: 1;
+        padding: 7px;
+        margin-left: -1px;
+        width: 80px;
+        border: 1px solid black;
+        background-color: rgb(38 37 37);
+        color: #928f8f;
+      }
 
-        .mTS2-modalCloseButton {
-            min-width: unset!important;
-        }
+      .maejok-settings-lists-list_btn:hover {
+        background-color: rgb(45, 45, 45);
+      }
 
-        .mTS2-denseChat {
-            padding: 0px;!important;
-            flex-direction: initial!important;
-        }
+      .maejok-settings-lists-list_btn:active {
+        background-color: rgb(55, 55, 55);
+      }
 
-        .mTS2-denseChat-chatMessageList {
-          gap: 0px!important;
-          padding:5px!important;
+      .maejok-about a,
+      .maejok-about a:visited {
+        text-decoration: none;
+        font-weight: 600;
+        color: #11f8ff
+      }
+
+      .maejok-about .container {
+        background-color: rgba(0, 0, 0, 0.25);
+        padding: 25px;
+      }
+
+      .maejok-about h1 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: rgb(200, 0, 200);
+      }
+
+      .maejok-about p {
+        width: 500px;
+        margin: 0 0 20px;
+        color: #FFF;
+      }
+
+      .maejok-settings_tab-content {
+        color: white;
+      }
+
+      .maejok-settings_tab-bar {
+        display: flex;
+        gap: 2px;
+        margin-bottom: 15px;
+      }
+
+      .maejok-settings_tab-button {
+        flex: 1;
+        border: none;
+        cursor: pointer;
+        width: 100px;
+        text-transform: uppercase;
+      }
+
+      .maejok-chatter_count {
+        flex: 1;
+        margin-left: 10px;
+      }
+
+      .maejok-chatter_count-count {
+        place-self: flex-start;
+        margin-left: 4px;
+        cursor: pointer;
+      }
+
+      .maejok-chatter_count-chatters {
+        display: none;
+        font-weight: 600;
+        position: absolute;
+        height: auto;
+        max-height: 300px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        z-index: 10;
+        background-color: #000;
+      }
+
+      .maejok-chatter_count-chatter {
+        padding: 5px;
+        color: #eee;
+        background-color: #444;
+        min-width: 200px;
+        border-bottom: 1px solid #333;
+      }
+
+      .maejok-chatter_count-chatter:hover {
+        color: #f0c841;
+        background-color: #444;
+        border-left: 3px solid white;
+        cursor: pointer;
+      }
+
+      .maejok-chatter_count-chatters-show {
+        display: block;
+      }
+
+      .maejok-update,
+      .maejok-update:visited {
+        text-decoration: none;
+        color: #11f8ff;
+      }
+
+      .mTS2-chatters-BigChat {
+        /**/
+      }
+
+      .mTS2-chatBox-BigChat-1 {
+        grid-column: 2/5 !important;
+        grid-row: 1/6 !important;
+        z-index: 1 !important;
+      }
+
+      .mTS2-chatBox-BigChat-2 {
+        top: 0 !important;
+        left: 0 !important;
+        z-index: 1 !important;
+        width: 100% !important;
+        height: 100% !important;
+        position: fixed !important;
+      }
+
+      .mTS2-countdown-BigChat-hide {
+        z-index: -2 !important;
+      }
+
+      .mTS2-countdown-BigChat-show {
+        z-index: 4 !important;
+      }
+
+      .mTS2-chatMessages-BigChat {
+        height: 81% !important;
+        border: 0 !important;
+        padding: 0 !important;
+        margin-bottom: 0 !important;
+        background-color: rgba(0, 0, 0, 0.0) !important;
+      }
+
+      .mTS2-chatInput-BigChat {
+        margin-left: 6px !important;
+        margin-right: 6px !important;
+      }
+
+      .mTS2-xpBar-BigChat-1 {
+        z-index: 20 !important;
+        margin-top: 34px !important;
+        width: calc(100% + -38px) !important;
+        margin-left: 225px !important;
+      }
+
+      .mTS2-xpBar-BigChat-2 {
+        z-index: 20 !important;
+        margin-top: 40px !important;
+        width: calc(100% + 170px) !important;
+      }
+
+      .mTS2-topBarUser-BigChat-1 {
+        z-index: -1 !important;
+      }
+
+      .mTS2-topBarTitle-BigChat-1 {
+        margin-left: 178px !important;
+        margin-top: 36px !important;
+        z-index: 22 !important;
+      }
+
+      .mTS2-topBarTitle-BigChat-2 {
+        z-index: 22 !important;
+        margin-top: 21px !important;
+      }
+
+      .mTS2-topBarLogo-BigChat-1 {
+        margin-top: -45px !important;
+        margin-left: 222px !important;
+      }
+
+      .mTS2-topBarLogo-BigChat-2 {
+        margin-top: -46px !important;
+        margin-left: 140px !important;
+      }
+
+      .mTS2-modalCloseButton {
+        min-width: unset !important;
+      }
+
+      .mTS2-denseChat {
+        padding: 0px;
+        !important;
+        flex-direction: initial !important;
+      }
+
+      .mTS2-denseChat-chatMessageList {
+        gap: 0px !important;
+        padding: 5px !important;
       }
 
       .mTS2-denseChat-chatXPLevel-disableAvatars {
-          top: unset!important;
-          left: unset!important;
+        top: unset !important;
+        left: unset !important;
       }
 
       .mTS2-chat-hide {
-          display: none!important;
+        display: none !important;
       }
 
       .mTS2-mobileNavPanel-BigChat {
-        display: none!important;
+        display: none !important;
       }
 
       @keyframes notice-me {
-        0%, 100% {
+
+        0%,
+        100% {
           transform: scale(1);
         }
+
         50% {
           transform: scale(0.9);
         }
       }
 
-      @media screen and (max-width: 1100px) {
-          .mTS2-topBar-BigChat {
-              display: none!important;
-          }
-          .mTS2-xpBar-BigChat {
-            width: 50%!important;
-            z-index: 20!important;
-            grid-row: 6/6!important;
-            margin-bottom: 15px!important;
-          }
-          .mTS2-chatters-BigChat {
-            left: 145px!important;
-            position: absolute!important;
-          }
+      .mTS2-secondaryPanel-BigChat {
+        z-index: 0 !important;
       }
+
+      #friends_bg_wrapper,
+      #watching_bg_wrapper,
+      #friends_border_wrapper,
+      #watching_border_wrapper {
+        background-color: black;
+        display: inline-block;
+        visibility: hidden;
+        margin-bottom: 10px;
+      }
+
+      #friends_bg_wrapper::before,
+      #watching_bg_wrapper::before,
+      #friends_border_wrapper::before,
+      #watching_border_wrapper::before {
+        content: "";
+        position: absolute;
+        border-radius: 3px;
+        outline: black solid 1px;
+        border: white solid 1px;
+        height: 1.5rem;
+        width: 1.5rem;
+        pointer-events: none;
+        background-color: inherit;
+        visibility: visible;
+        box-sizing: border-box;
+      }
+
+      #friends_bg_color,
+      #watching_bg_color,
+      #friends_border_color,
+      #watching_border_color {
+        opacity: 0;
+        height: 1.5rem;
+        width: 1.5rem;
+        box-sizing: border-box;
+        pointer-events: initial;
+        visibility: visible;
+      }
+
+
+      #friends_bg_alpha,
+      #watching_bg_alpha,
+      #friends_border_alpha,
+      #watching_border_alpha {
+        filter: grayscale(100%);
+        visibility: visible;
+      }
+
+      @media screen and (max-width: 1225px) {
+
+        .mTS2-chatBox-BigChat-1,
+        .mTS2-chatBox-BigChat-2 {
+          top: 0 !important;
+          left: 0 !important;
+          z-index: 1 !important;
+          width: 100% !important;
+          height: 100% !important;
+          position: fixed !important;
+        }
+
+        .mTS2-topBarTitle-BigChat-1 {
+          margin-top: 18px !important;
+        }
+
+        .mTS2-topBarTitle-BigChat-2 {
+          margin-left: 147px !important;
+          margin-top: 18px !important;
+        }
+
+        .mTS2-topBarLogo-BigChat-1 {
+          margin-top: -40px !important;
+          margin-left: 212px !important;
+        }
+
+        .mTS2-topBarLogo-BigChat-2 {
+          margin-top: -40px !important;
+          margin-left: 212px !important;
+        }
+
+        .mTS2-topBarUser-BigChat-1 {
+          z-index: -1 !important;
+          display: none !important;
+        }
+
+        .mTS2-xpBar-BigChat-1 {
+          z-index: 20 !important;
+          margin-top: 41px !important;
+          width: calc(100% + 144px) !important;
+          margin-left: 0px !important;
+        }
+
+      }
+
+      @media screen and (max-width: 1100px) {
+        .mTS2-topBar-BigChat {
+          display: none !important;
+        }
+
+        .mTS2-xpBar-BigChat-1 {
+          grid-row: unset !important;
+          z-index: 20 !important;
+          margin-top: 598px !important;
+          width: calc(100% + -406px) !important;
+          margin-left: 224px !important;
+        }
+
+        .mTS2-xpBar-BigChat-2 {
+          grid-row: unset !important;
+          z-index: 20 !important;
+          margin-top: 665px !important;
+          width: calc(100% + -406px) !important;
+          margin-left: 224px !important;
+        }
+
+        .mTS2-chatters-BigChat {
+          margin-left: 20px !important;
+        }
+      }
+
+
       @media screen and (max-width: 800px) {
-          .mTS2-xpBar-BigChat {
-              width: 25%!important;
-          }
-          .mTS2-chatters-BigChat {
-            left: 130px!important;
-            position: absolute!important;
-          }
+
+        .mTS2-xpBar-BigChat-1,
+        .mTS2-xpBar-BigChat-2 {
+          grid-row: unset !important;
+          width: calc(100% + -387px) !important;
+          margin-left: 206px !important;
+        }
+
+        .chat-input_actions__V_ho0 {
+          margin-left: 5px !important;
+        }
+
       }
   `);
 })();

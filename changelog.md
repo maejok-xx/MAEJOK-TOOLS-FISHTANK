@@ -1,8 +1,42 @@
-# MAEJOK-TOOLS v2.4.4/v2.4.5 CHANGE LOG
+# MAEJOK-TOOLS CHANGE LOG
 
+# ***v2.4.6***
+### Notes
+ - The new "MidChat" mode will break to BigChat around 1200px due to how the site handles sizing of the chat window, however, you'll still be in MidChat mode if you resize down below 1200ishpx, so you'll still need to toggle twice to get back to normal mode...this is not a bug! Don't @ me about this.
+
+### Bug Fixes
+ - N/A
+
+### Features Added
+ - Settings tab to edit "Friends" and "Watched" users and their corresponding highlight colors.  Google HEX or RGBA color generator to find colors.
+ - Ability to customize Friends and Watched Users message highlight colors
+ - Updated BigChat to now have a "MidChat" mode. Toggle once for MidChat, twice for BigChat, and thrice to go back to the original layout.
+
+ ### Removed
+ - N/A
+
+
+---
+
+
+# ***v2.4.5***
 ### Notes
  - Cleaned up settings Panel
- - leaving change log for 2.4.4 here since most people probably didn't update yet
+
+### Bug Fixes
+ - N/A
+
+### Features Added
+ - N/A
+
+ ### Features Removed
+ - None
+
+
+---
+
+# ***v2.4.4***
+### Notes
  - This update is mostly to get the update system finished, and to clean up and refactor some code, and most importantly, to put a notice in place not to bother Wes (fishtank developer) with any bugs or issues created by me distributing this plugin.
 
 ### Bug Fixes
