@@ -34,6 +34,7 @@
     topBarLogo: 'top-bar_logo',
     topBarClan: 'top-bar_clan',
     topBarDisplayName: 'top-bar_display-name',
+    globalMission: 'global-mission-button_global',
     // chat
     chatHeader: 'chat_header',
     chatPresence: 'chat_presence',
@@ -729,6 +730,7 @@
     const countDownTimerElement = document.querySelector(`[class*="${classes.countDownTimer}"]`);
     const secondaryPanel = document.querySelector(`[class^="${classes.secondaryPanel}"]`);
     const mobileNavPanel = document.querySelector(`[class^="${classes.mobileNavPanel}"]`);
+    const globalMission = document.querySelector(`[class^="${classes.globalMission}"]`);
 
     if (chatBoxElement) {
       console.log(isBigChat);
@@ -750,6 +752,7 @@
       xpBarElement.classList.toggle('mTS2-xpBar-BigChat-2', isBigChat === 2);
 
       mobileNavPanel.classList.toggle('mTS2-mobileNavPanel-BigChat', isBigChat !== 0);
+      globalMission.classList.toggle('mTS2-globalMission-BigChat', isBigChat !== 0);
 
       // chatMessagesElement.classList.toggle('mTS2-chatMessages-BigChat', isBigChat);
       // chatInputFormElement.classList.toggle('mTS2-chatInput-BigChat', isBigChat);
@@ -1869,6 +1872,10 @@
 
       .mTS2-modalCloseButton {
         min-width: unset !important;
+      }
+
+      .mTS2-globalMission-BigChat {
+        visibility: hidden!important;
       }
 
       .mTS2-denseChat {
