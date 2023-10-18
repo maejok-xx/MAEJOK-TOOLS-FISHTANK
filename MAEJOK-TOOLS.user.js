@@ -730,7 +730,7 @@
     const countDownTimerElement = document.querySelector(`[class*="${classes.countDownTimer}"]`);
     const secondaryPanel = document.querySelector(`[class^="${classes.secondaryPanel}"]`);
     const mobileNavPanel = document.querySelector(`[class^="${classes.mobileNavPanel}"]`);
-    const globalMission = document.querySelector(`[class^="${classes.globalMission}"]`);
+    const globalMission = document.querySelector(`[class*="${classes.globalMission}"]`);
 
     if (chatBoxElement) {
       console.log(isBigChat);
