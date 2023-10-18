@@ -733,8 +733,6 @@
     const globalMission = document.querySelector(`[class*="${classes.globalMission}"]`);
 
     if (chatBoxElement) {
-      console.log(isBigChat);
-
       chatBoxElement.classList.toggle('mTS2-chatBox-BigChat-1', isBigChat === 1);
       chatBoxElement.classList.toggle('mTS2-chatBox-BigChat-2', isBigChat === 2);
 
