@@ -29,7 +29,6 @@ Requires TamperMonkey, ViolentMonkey, or GreaseMonkey.
 
 ---
 ### Feature Ideas
- - /flipcoin
  - "away" mode (log mentions)
  - clan highlighting (and maybe tagging?)
  - chat log extender
