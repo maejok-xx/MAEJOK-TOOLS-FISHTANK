@@ -1,7 +1,8 @@
 # MAEJOK-TOOLS CHANGE LOG
 
-# ***v2.4.7***
+# ***v2.4.7 / 2.4.8***
 ### Notes
+ - 2.4.7 to 2.4.8 is because I'm an idiot and updated code without testing JUST before pushing 2.4.7
  - This update is just bugfixes and a little code refactoring
  - Made dense chat a little less dense...might make density customizable in settings at another date
 
