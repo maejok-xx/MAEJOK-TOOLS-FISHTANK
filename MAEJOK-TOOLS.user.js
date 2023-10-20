@@ -747,6 +747,8 @@
 
       mobileNavPanel.classList.toggle('mTS2-mobileNavPanel-BigChat', bigChatMode !== 0);
 
+      secondaryPanel.classList.toggle('mTS2-secondaryPanel-BigChat', bigChatMode === 2);
+
       chatChatterCount.classList.toggle('mTS2-chatters-BigChat', bigChatMode !== 0);
 
       globalMission && globalMission.classList.toggle('mTS2-globalMission-BigChat', bigChatMode !== 0);
@@ -963,6 +965,15 @@
 
 
   // EVENTS
+  function handleWindowSize() {
+    const secondaryPanel = document.querySelector(`[class^="${classes.secondaryPanel}"]`);
+    if (window.innerWidth < 1101) {
+      secondaryPanel.classList.toggle('mTS2-secondaryPanel-BigChat', bigChatMode !== 0);
+    } else {
+      secondaryPanel.classList.toggle('mTS2-secondaryPanel-BigChat', 0);
+    }
+  }
+
   function handleKeyPress(event) {
     if (!isPageLoaded) return;
     if (event.ctrlKey && event.keyCode === 192 || event.ctrlKey && event.shiftKey && event.keyCode === 32 ) { toggleBigChat(); return; }
@@ -1526,6 +1537,7 @@
         sessionStorage.getItem('maejok-showChangelog') ? insertChangelog() : null;
 
         if (config.get('persistBigChat') && config.get('bigChatState')) toggleBigChat(config.get('bigChatState'));
+        window.addEventListener("resize", handleWindowSize);
       }
 
       const chatMessagesElement = document.querySelector(`[class*="${classes.chatMessages}"]`);
@@ -1923,7 +1935,7 @@
       }
 
       .mTS2-secondaryPanel-BigChat {
-        visibility: hidden!important;
+        display: none!important;
       }
 
       #friends_bg_wrapper,
