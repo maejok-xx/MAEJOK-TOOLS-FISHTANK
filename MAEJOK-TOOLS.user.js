@@ -2,7 +2,7 @@
 // @name         MAEJOK-TOOLS for Fishtank.live
 // @description  Tools for Fishtank.live Season 2!
 // @author       maejok-xx
-// @version      2.4.7-1
+// @version      2.4.71
 // @license      GNU GPLv3
 // @homepageURL  https://github.com/maejok-xx/MAEJOK-TOOLS-FISHTANK
 // @namespace    https://greasyfork.org/en/scripts/465416-maejok-tools-for-fishtank-live
