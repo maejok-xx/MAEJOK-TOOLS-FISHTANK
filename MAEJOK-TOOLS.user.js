@@ -1153,7 +1153,7 @@
 
   function playSound(sound) {
     const audio = document.createElement('audio');
-    const sounds = new Map([['equip', 'mp3'], ['denied', 'mp3'], ['chunk-short', 'mp3'], ['blip', 'mp3'], ['book', 'mp3'], ['click-high-short', 'mp3'], ['click-low-short', 'mp3'], ['xp', 'mp3'], ['level', 'mp3'], ['twinkle', 'mp3'], ['mention', 'mp3'], ['click-harsh-short', 'wav'], ['swap-short', 'wav'], ['shutter', 'wav'], ['complete', 'wav'], ['xp-down', 'wav'], ['power', 'wav'], ['daily', 'wav'], ['item-found', 'wav'], ['item-consumed', 'wav'],['panic', 'wav'], ['poll', 'wav'], ['tick-short', 'wav']]);
+    const sounds = new Map([['doom', 'mp3'], ['vomit', 'mp3'], ['romantic', 'mp3'], ['massacre', 'mp3'], ['breakup', 'mp3'], ['fart', 'mp3'], ['raid', 'mp3'], ['equip', 'mp3'], ['denied', 'mp3'], ['chunk-short', 'mp3'], ['blip', 'mp3'], ['book', 'mp3'], ['click-high-short', 'mp3'], ['click-low-short', 'mp3'], ['xp', 'mp3'], ['level', 'mp3'], ['twinkle', 'mp3'], ['mention', 'mp3'], ['click-harsh-short', 'wav'], ['swap-short', 'wav'], ['shutter', 'wav'], ['complete', 'wav'], ['xp-down', 'wav'], ['power', 'wav'], ['daily', 'wav'], ['item-found', 'wav'], ['item-consumed', 'wav'],['panic', 'wav'], ['poll', 'wav'], ['tick-short', 'wav']]);
     const ext = sounds.get(sound);
     if (ext) {
       audio.src = `/sounds/${sound}.${ext}`;
@@ -2039,8 +2039,7 @@
       }
 
       .maejok-mentioned_highlight, .maejok-mentioned_highlight:hover {
-        border: 4px dotted #970089bf!important;
-        padding: 5px!important;
+        background-color: #97008957!important;
       }
 
 
