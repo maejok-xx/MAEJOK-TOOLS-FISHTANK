@@ -1,5 +1,26 @@
 # MAEJOK-TOOLS CHANGE LOG
 
+# ***v2.4.7***
+### Notes
+ - This update is just bugfixes and a little code refactoring
+ - Made dense chat a little less dense...might make density customizable in settings at another date
+
+### Bug Fixes
+ - Fix global mission button showing through in Mid/BigChat on reload with Persist BigChat enabled
+ - Fix chat modes toggling when opening/saving settings
+ - Fix countdown timer setting not working correctly
+ - Fix custom setting values not saving (chatters threshold, update check frequency, etc)
+
+### Features Added
+ - N/A
+
+ ### Removed
+ - N/A
+
+
+---
+
+
 # ***v2.4.6***
 ### Notes
  - The new "MidChat" mode will break to BigChat around 1200px due to how the site handles sizing of the chat window, however, you'll still be in MidChat mode if you resize down below 1200ishpx, so you'll still need to toggle twice to get back to normal mode...this is not a bug! Don't @ me about this.
