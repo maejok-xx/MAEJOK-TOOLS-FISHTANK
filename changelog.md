@@ -2,7 +2,7 @@
 
 # ***v2.4.9***
 ### Notes
- - To use ContextHelper9000: click any @User_Mention and all their  messages (if any) will become outlined with purple. To remove, click any other one of their mentions or one of their messages.
+ - To use ContextHelper9000: click any @User_Mention and all their  messages (if any) will be highlighted in purple. To remove, click any other one of their mentions or one of their messages.
 
 ### Bug Fixes
  - Fix not being able to type in mid/big chat mode when window <1100px

@@ -13,7 +13,7 @@ Current Features:
 - Quick Scroll to bottom (click "Auto-scroll off")
 - Toggle in Chat: Timestamps/Avatars/Clans/XP/Emotes/Consumables/System Messages & Medals
 - And it's all controllable via Integrated Settings Panel
-- ContextHelper9000 (click any @User_Mention and all their  messages [if any] will become outlined with purple. To remove, click any other one of their mentions or one of their messages.)
+- ContextHelper9000 (click any @User_Mention and all their  messages [if any] will be highlighted in purple. To remove, click any other one of their mentions or one of their messages.)
 - and a few other small tweaks
 
 I will be adding more features at more ideas ARISE \o/.
