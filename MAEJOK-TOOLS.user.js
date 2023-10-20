@@ -2,7 +2,7 @@
 // @name         MAEJOK-TOOLS for Fishtank.live
 // @description  Tools for Fishtank.live Season 2!
 // @author       maejok-xx
-// @version      2.4.7
+// @version      2.4.7-1
 // @license      GNU GPLv3
 // @homepageURL  https://github.com/maejok-xx/MAEJOK-TOOLS-FISHTANK
 // @namespace    https://greasyfork.org/en/scripts/465416-maejok-tools-for-fishtank-live
@@ -1187,7 +1187,7 @@
     const interval = setInterval(() => {
       const element = document.querySelector(`[class*="${selector}"]`);
       if (element || count * 5 >= duration) { // try for 15 seconds in case shit is slow loading
-        element.classList.toggle(`${classToApply}`, forceToggle);
+        element && element.classList.toggle(`${classToApply}`, forceToggle);
         clearInterval(interval);
       }
       count++
