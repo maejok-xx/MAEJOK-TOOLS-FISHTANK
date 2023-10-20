@@ -2,7 +2,7 @@
 // @name         MAEJOK-TOOLS for Fishtank.live
 // @description  Tools for Fishtank.live Season 2!
 // @author       maejok-xx
-// @version      2.4.8
+// @version      2.4.9
 // @license      GNU GPLv3
 // @homepageURL  https://github.com/maejok-xx/MAEJOK-TOOLS-FISHTANK
 // @namespace    https://greasyfork.org/en/scripts/465416-maejok-tools-for-fishtank-live
@@ -59,6 +59,7 @@
     chatXPLevel: 'chat-message-default_lvl',
     chatAutoScroll: 'chat_scroll',
     chatUsername: 'chat-message-default_user',
+    chatMention: 'chat-message-default_mention',
     // username
     userCardUsername: 'user-card_name',
     userCardActions: 'user-card_actions',
@@ -698,7 +699,7 @@
   }
 
 
-  // TOGGLES
+  // STATE SWITCHING
   let bigChatMode = 0;
   function toggleBigChat(state = null) {
     if (!isPageLoaded || !config.get('enableBigChat')) return;
@@ -838,8 +839,58 @@
     }
   }
 
+  let lastMentioned = null;
+  function addMentionedHighlight(mentionedUsername) {
+    mentionedUsername = mentionedUsername.toLowerCase();
+    const messages = document.querySelectorAll(`[data-username="${mentionedUsername}"]`);
+    if (!messages.length) {
+      removeMentionedHighlight();
+      playSound('denied');
+      return;
+    }
+
+    if (lastMentioned == mentionedUsername) {
+      removeMentionedHighlight(true);
+      return;
+    }
+
+    removeMentionedHighlight()
+    messages.forEach(message => {
+      lastMentioned = mentionedUsername;
+      message.classList.add('maejok-mentioned_highlight')
+      message.addEventListener('click', removeMentionedHighlight);
+    });
+    playSound('click-low-short');
+  }
+
+  function removeMentionedHighlight(sound) {
+    if (sound) playSound('click-high-short');
+    const highlightedMessages = document.querySelectorAll(`[class*="maejok-mentioned_highlight"]`);
+    highlightedMessages.forEach(message => {
+      message.classList.remove('maejok-mentioned_highlight')
+      message.removeEventListener('click', removeMentionedHighlight);
+    });
+    lastMentioned = null;
+  }
+
 
   // MISC
+  function tagUser(username){
+    username = username.replace(/\[.*?\]/g, '')
+    const chatInputElement = document.querySelector(`[class*="${classes.chatInput}"]`);
+    let currentInput = chatInputElement.innerHTML;
+    let updateInput = new KeyboardEvent('input', { bubbles: true });
+
+    if (currentInput) {
+      chatInputElement.innerHTML = currentInput + '&nbsp;@' + username + '&nbsp;';
+    } else {
+      chatInputElement.innerHTML = '@' + username + '&nbsp;';
+    }
+    chatInputElement.dispatchEvent(updateInput);
+    setCursorPosition(chatInputElement);
+    playSound('click-high-short');
+  }
+
   function joinClanChat() {
     const autoClanChatEnabled = config.get('autoClanChat');
     if (!autoClanChatEnabled) return;
@@ -1085,22 +1136,6 @@
 
 
   // UTILITY
-  function tagUser(username){
-    username = username.replace(/\[.*?\]/g, '')
-    const chatInputElement = document.querySelector(`[class*="${classes.chatInput}"]`);
-    let currentInput = chatInputElement.innerHTML;
-    let updateInput = new KeyboardEvent('input', { bubbles: true });
-
-    if (currentInput) {
-      chatInputElement.innerHTML = currentInput + '&nbsp;@' + username + '&nbsp;';
-    } else {
-      chatInputElement.innerHTML = '@' + username + '&nbsp;';
-    }
-    chatInputElement.dispatchEvent(updateInput);
-    setCursorPosition(chatInputElement);
-    playSound('click-high-short');
-  }
-
   function isNumeric(str) {
     if (typeof str != "string") return false
     if (str === undefined) return false
@@ -1353,14 +1388,32 @@
         mutation.addedNodes.forEach((addedNode) => {
           if (!addedNode instanceof HTMLElement) return;
 
+          // mentioned user highlighting
+          const mentions = addedNode.querySelectorAll(`[class^="${classes.chatMention}"]`);
+          if (mentions.length !== 0) {
+            let tags = [];
+            mentions.forEach(mention => {
+              const mentionedUsername = mention.textContent.replace('@', '').toLowerCase();
+              tags.push(mentionedUsername);
+              mention.style.cursor = "pointer";
+              mention.addEventListener('click', ()=> addMentionedHighlight(mentionedUsername));
+            });
+
+            addedNode.dataset.tags = tags;
+          }
+
           // update chatters list / highlight users
           const userElm = addedNode.querySelector(`[class*="${classes.chatUsername}"]`);
           const clanElm = addedNode.querySelector(`[class*="${classes.chatUsername}"] span`)?.innerHTML;
           let username = '';
           let clan = '';
           if (userElm) {
-            username = userElm.innerHTML.replace(/<span[^>]*>.*?<\/span>/, '');
+            username = userElm.innerHTML.replace(/<span[^>]*>.*?<\/span>/, '').toLowerCase();
             clan = clanElm ? clanElm?.replace(/\[|\]/g, '') : null;
+
+            addedNode.dataset.clan = clan;
+            addedNode.dataset.username = username;
+
             if (config.get('enableRecentChatters')) {
                 updateChattersList(username, clan, lists.chatters);
             }
@@ -1562,8 +1615,8 @@
 
 
   // STYLES
-  GM_addStyle(
-    `.modal_body__j3Bav {
+  GM_addStyle(`
+      .modal_body__j3Bav {
         overflow-x: hidden !important;
       }
 
@@ -1636,7 +1689,6 @@
         transform: scale(1.3);
         transition: transform 0.15s ease-in-out;
       }
-
 
       .maejok-settings-lists-list_item_name {
         padding: 5px 8px;
@@ -1985,6 +2037,12 @@
         filter: grayscale(100%);
         visibility: visible;
       }
+
+      .maejok-mentioned_highlight, .maejok-mentioned_highlight:hover {
+        border: 4px dotted #970089bf!important;
+        padding: 5px!important;
+      }
+
 
       @media screen and (max-width: 1225px) {
 
