@@ -2,7 +2,7 @@
 // @name         MAEJOK-TOOLS for Fishtank.live
 // @description  Tools for Fishtank.live Season 2!
 // @author       maejok-xx
-// @version      2.4.6
+// @version      2.4.7
 // @license      GNU GPLv3
 // @homepageURL  https://github.com/maejok-xx/MAEJOK-TOOLS-FISHTANK
 // @namespace    https://greasyfork.org/en/scripts/465416-maejok-tools-for-fishtank-live
@@ -27,14 +27,16 @@
   // DON'T EDIT THESE!!
   const classes = {
     mainHome: 'home_home',
+    mainPanel: 'main-panel',
     // top bar
     topBar: 'top-bar_top-bar',
     topBarUser: 'top-bar_user',
     topBarTitle: 'top-bar_title',
     topBarLogo: 'top-bar_logo',
+    topBarAdmin: 'admin-toolbar',
     topBarClan: 'top-bar_clan',
     topBarDisplayName: 'top-bar_display-name',
-    globalMission: 'global-mission-button_global',
+    globalMission: 'global-mission-button',
     // chat
     chatHeader: 'chat_header',
     chatPresence: 'chat_presence',
@@ -111,17 +113,8 @@
     }
   }
 
-  let openSettingsBigChatState = false
   function createSettingsPanel() {
     if (!isPageLoaded || document.querySelector(`.${classes.modalContainer}`)) return;
-
-    if (isBigChat){
-      openSettingsBigChatState = true;
-      toggleBigChat();
-    } else {
-      openSettingsBigChatState = false;
-      playSound('click-low-short');
-    }
 
     config.load();
 
@@ -325,6 +318,9 @@
 
     const autoClanChat = createCheckbox('Auto-Join Clan Chat', 'autoClanChat', ['help', ' ? ', 'Automatically joins your clan\'s chat upon page load']);
     tabMain.appendChild(autoClanChat);
+
+    const extendChat = createCheckbox('Extend Chat History', 'extendChat', ['prompt', 'Limit', 'Number of messages to keep in history (Minimum/Default: 100)', 'chatHistoryLimit', '']);
+    tabMain.appendChild(extendChat);
 
 
     //hiders
@@ -706,62 +702,70 @@
 
 
   // TOGGLES
-  let isBigChat = 0;
+  let bigChatMode = 0;
   function toggleBigChat(state = null) {
     if (!isPageLoaded || !config.get('enableBigChat')) return;
-    isBigChat = (state != null) ? state : (isBigChat + 1) % 3;
+    bigChatMode = (state != null) ? state : (bigChatMode + 1) % 3;
 
     if (config.get('persistBigChat')) {
-      config.set('bigChatState', isBigChat);
+      config.set('bigChatState', bigChatMode);
       config.save()
     }
 
     playSound('shutter');
-    const chatBoxElement = document.querySelector(`[class*="${classes.chatBox}"]`);
-    const chatMessagesElement = document.querySelector(`[class*="${classes.chatMessages}"]`);
-    const chatInputFormElement = document.querySelector(`[class*="${classes.chatInputForm}"]`);
-    const chatChatterCountElement = document.querySelector(`.${classes.chatterCount}`);
-    const xpBarElement = document.querySelector(`[class*="${classes.xpBar}"]`);
-    const topBarElement = document.querySelector(`[class*="${classes.topBar}"]`);
-    const topBarUserElement = document.querySelector(`[class*="${classes.topBarUser}"]`);
-    const topBarTitleElement = document.querySelector(`[class*="${classes.topBarTitle}"]`);
-    const topBarLogoElement = document.querySelector(`[class*="${classes.topBarLogo}"]`);
-    const happeningMessageElement = document.querySelector(`[class*="${classes.happeningMessage}"]`);
-    const countDownTimerElement = document.querySelector(`[class*="${classes.countDownTimer}"]`);
-    const secondaryPanel = document.querySelector(`[class^="${classes.secondaryPanel}"]`);
+    const chatBox = document.querySelector(`[class*="${classes.chatBox}"]`);
+    const chatChatterCount = document.querySelector(`.${classes.chatterCount}`);
+    const xpBar = document.querySelector(`[class*="${classes.xpBar}"]`);
+    const topBar = document.querySelector(`[class*="${classes.topBar}"]`);
+    const topBarAdmin = document.querySelector(`[class*="${classes.topBarAdmin}"]`);
+    const topBarUser = document.querySelector(`[class*="${classes.topBarUser}"]`);
+    const topBarTitle = document.querySelector(`[class*="${classes.topBarTitle}"]`);
+    const topBarLogo = document.querySelector(`[class*="${classes.topBarLogo}"]`);
+    const happeningMessage = document.querySelector(`[class*="${classes.happeningMessage}"]`);
+    const countDownTimer = document.querySelector(`[class*="${classes.countDownTimer}"]`);
     const mobileNavPanel = document.querySelector(`[class^="${classes.mobileNavPanel}"]`);
-    const globalMission = document.querySelector(`[class*="${classes.globalMission}"]`);
+    const globalMission = document.querySelector(`[class^="${classes.globalMission}"]`);
+    const secondaryPanel = document.querySelector(`[class^="${classes.secondaryPanel}"]`);
+    // const chatMessages = document.querySelector(`[class*="${classes.chatMessages}"]`);
+    // const chatInputForm = document.querySelector(`[class*="${classes.chatInputForm}"]`);
 
-    if (chatBoxElement) {
-      chatBoxElement.classList.toggle('mTS2-chatBox-BigChat-1', isBigChat === 1);
-      chatBoxElement.classList.toggle('mTS2-chatBox-BigChat-2', isBigChat === 2);
+    if (chatBox) {
+      chatBox.classList.toggle('mTS2-chatBox-BigChat-1', bigChatMode === 1);
+      chatBox.classList.toggle('mTS2-chatBox-BigChat-2', bigChatMode === 2);
 
-      topBarLogoElement.classList.toggle('mTS2-topBarLogo-BigChat-1', isBigChat === 1);
-      topBarLogoElement.classList.toggle('mTS2-topBarLogo-BigChat-2', isBigChat === 2);
+      topBarLogo.classList.toggle('mTS2-topBarLogo-BigChat-1', bigChatMode === 1);
+      topBarLogo.classList.toggle('mTS2-topBarLogo-BigChat-2', bigChatMode === 2);
 
-      topBarTitleElement.classList.toggle('mTS2-topBarTitle-BigChat-1', isBigChat === 1);
-      topBarTitleElement.classList.toggle('mTS2-topBarTitle-BigChat-2', isBigChat === 2);
+      topBarTitle.classList.toggle('mTS2-topBarTitle-BigChat-1', bigChatMode === 1);
+      topBarTitle.classList.toggle('mTS2-topBarTitle-BigChat-2', bigChatMode === 2);
 
-      topBarUserElement.classList.toggle('mTS2-topBarUser-BigChat-1', isBigChat !== 0);
+      topBarUser.classList.toggle('mTS2-topBarUser-BigChat-1', bigChatMode !== 0);
 
-      topBarElement.classList.toggle('mTS2-topBar-BigChat', isBigChat === 2);
+      topBar.classList.toggle('mTS2-topBar-BigChat', bigChatMode === 2);
 
-      xpBarElement.classList.toggle('mTS2-xpBar-BigChat-1', isBigChat === 1);
-      xpBarElement.classList.toggle('mTS2-xpBar-BigChat-2', isBigChat === 2);
+      topBarAdmin && topBarAdmin.classList.toggle('mTS2-topBarAdmin-BigChat', bigChatMode !== 0);
 
-      mobileNavPanel.classList.toggle('mTS2-mobileNavPanel-BigChat', isBigChat !== 0);
-      globalMission.classList.toggle('mTS2-globalMission-BigChat', isBigChat !== 0);
+      xpBar.classList.toggle('mTS2-xpBar-BigChat-1', bigChatMode === 1);
+      xpBar.classList.toggle('mTS2-xpBar-BigChat-2', bigChatMode === 2);
 
-      // chatMessagesElement.classList.toggle('mTS2-chatMessages-BigChat', isBigChat);
-      // chatInputFormElement.classList.toggle('mTS2-chatInput-BigChat', isBigChat);
-      // chatChatterCountElement.classList.toggle('mTS2-chatters-BigChat', isBigChat);
-      // secondaryPanel.classList.toggle('mTS2-secondaryPanel-BigChat', isBigChat);
+      mobileNavPanel.classList.toggle('mTS2-mobileNavPanel-BigChat', bigChatMode !== 0);
 
-      if (config.get('showTimerBigChat')) countDownTimerElement?.classList.toggle('mTS2-countdown-BigChat-show', isBigChat);
-      if (!config.get('showTimerBigChat')) countDownTimerElement?.classList.toggle('mTS2-countdown-BigChat-hide', isBigChat);
+      chatChatterCount.classList.toggle('mTS2-chatters-BigChat', bigChatMode !== 0);
 
-      if (happeningMessageElement) happeningMessageElement.style.textAlign = isBigChat ? 'unset' : 'center';
-      xpBarElement.style.transition = 'margin-top 0.5s';
+      globalMission && globalMission.classList.toggle('mTS2-globalMission-BigChat', bigChatMode !== 0);
+
+      tryToApplyClass(classes.globalMission, 'mTS2-globalMission-BigChat', bigChatMode !== 0);
+
+      tryToApplyClass(classes.topBarAdmin, 'mTS2-topBarAdmin-BigChat', bigChatMode !== 0);
+
+      if (config.get('showTimerBigChat')) {
+        countDownTimer && countDownTimer.classList.remove('mTS2-countdown-BigChat-hide');
+        tryToApplyClass(classes.countDownTimer, 'mTS2-countdown-BigChat-show', bigChatMode !== 0);
+      } else {
+        countDownTimer && countDownTimer.classList.remove('mTS2-countdown-BigChat-show');
+        tryToApplyClass(classes.countDownTimer, 'mTS2-countdown-BigChat-hide', bigChatMode !== 0);
+      }
+
     }
 
   }
@@ -882,7 +886,7 @@
     const chatUserList = document.createElement('div');
     chatUserList.classList.add(`maejok-chatter_count-chatters`);
 
-    if (isBigChat) {
+    if (bigChatMode) {
       chatUserList.style.top = `${event.clientY+3}px`;
       chatUserList.style.left = `${event.clientX-56}px`;
     } else {
@@ -964,7 +968,8 @@
   // EVENTS
   function handleKeyPress(event) {
     if (!isPageLoaded) return;
-    if (event.ctrlKey && event.keyCode === 192 || event.ctrlKey && event.shiftKey && event.keyCode === 32  || (isBigChat && event.keyCode === 27)) { toggleBigChat(); return; }
+    if (event.ctrlKey && event.keyCode === 192 || event.ctrlKey && event.shiftKey && event.keyCode === 32 ) { toggleBigChat(); return; }
+    if (bigChatMode !== 0 && event.keyCode === 27) { toggleBigChat(0); return; }
     if (event.keyCode === 27) { handleCloseModalEvent(); }
   }
 
@@ -1087,6 +1092,7 @@
     setCursorPosition(chatInputElement);
     playSound('click-high-short');
   }
+
   function isNumeric(str) {
     if (typeof str != "string") return false
     if (str === undefined) return false
@@ -1131,16 +1137,6 @@
     return userInput || false
   }
 
-  function hexaToRGBA(hexColor, opacity) {
-    const alpha = opacity / 255;
-    const alphaRounded = parseFloat(alpha.toFixed(2));
-    const red = parseInt(hexColor.slice(1, 3), 16);
-    const green = parseInt(hexColor.slice(3, 5), 16);
-    const blue = parseInt(hexColor.slice(5, 7), 16);
-    const rgbaColor = `rgba(${red}, ${green}, ${blue}, ${alphaRounded})`;
-    return rgbaColor;
-  }
-
   function saveConfig(closeModal = true) {
     const form = document.querySelector('.maejok-settings_form');
     if (form) {
@@ -1151,16 +1147,14 @@
         if (input.type === 'checkbox') {
           let value = input.checked ? true : false
           config.set(settingKey, value);
-          // console.log(settingKey, value);
+        } else if (input.type === 'hidden') {
+          let settingKey = input.id.replace("maejok-", "");
+          config.set(settingKey, input.value);
         }
       });
 
-      // console.log(hexaToRGBA(bg.color, bg.alpha));
-
-      console.log(lists.colors);
       config.set('friends', lists.friends);
       config.set('highlighted', lists.watching);
-      console.log(lists.colors);
       config.set('colors', lists.colors);
     }
     config.save();
@@ -1170,8 +1164,8 @@
     if (closeModal) {
       handleCloseModalEvent();
       startUpdateChecker();
-      if (openSettingsBigChatState) toggleBigChat();
     }
+    toggleBigChat(bigChatMode);
   }
 
   function scrollToBottom() {
@@ -1185,6 +1179,19 @@
     const rgbPart = hexWithOpacity.match(hexPattern)[1];
     const opacityPart = parseInt(hexWithOpacity.match(hexPattern)[2], 16);
     return { hex: `#${rgbPart}`, alpha: opacityPart };
+  }
+
+  function tryToApplyClass(selector, classToApply, forceToggle) {
+    let count = 0;
+    const duration = 15 * 1000;
+    const interval = setInterval(() => {
+      const element = document.querySelector(`[class*="${selector}"]`);
+      if (element || count * 5 >= duration) { // try for 15 seconds in case shit is slow loading
+        element.classList.toggle(`${classToApply}`, forceToggle);
+        clearInterval(interval);
+      }
+      count++
+    }, 5);
   }
 
 
@@ -1453,13 +1460,17 @@
         v: 1
       },
       agreementAccepted: false,
+      extendChat: false,
     };
+    const internalSettings = {
+      waitElement: classes.chatBox
+    }
 
     const get = (key) => { return settings[key]; };
 
-    const set = (key, value) => {
-      if (settings.hasOwnProperty(key)) { settings[key] = value; }
-    };
+    const internal = (key) => { return internalSettings[key]; };
+
+    const set = (key, value) => { if (settings.hasOwnProperty(key)) { settings[key] = value; }};
 
     const load = () => {
       const storedSettings = JSON.parse(localStorage.getItem('s2_maejoktools-settings'));
@@ -1484,7 +1495,7 @@
       localStorage.setItem('s2_maejoktools-settings', JSON.stringify(storedSettings));
     };
 
-    return { get, set, load, save };
+    return { get, internal, set, load, save };
   };
   const config = initConfig();
 
@@ -1492,15 +1503,12 @@
   let isPageLoaded = false;
   let my = { name: null, clan: null }
   function start() {
+    config.load();
     const initWait = setInterval(() => {
-      const chatBoxElement = document.querySelector(`[class*="${classes.chatBox}`);
-      if (chatBoxElement) {
+      const waitElement = document.querySelector(`[class^="${config.internal('waitElement')}`);
+      if (waitElement) {
         clearInterval(initWait);
-        config.load();
         isPageLoaded = true;
-
-        const chatMessagesElement = document.querySelector(`[class*="${classes.chatMessages}"]`);
-        chatMessagesElement.style.padding = '0';
 
         const displayNameElement = document.querySelector(`[class*="${classes.topBarDisplayName}"]`);
         const clanNameElement = document.querySelector(`[class*="${classes.topBarClan}"]`);
@@ -1521,10 +1529,11 @@
 
         sessionStorage.getItem('maejok-showChangelog') ? insertChangelog() : null;
 
-        if (config.get('persistBigChat')) {
-          setTimeout(() => { if (config.get('bigChatState')) toggleBigChat(config.get('bigChatState')); }, 500);
-        }
+        if (config.get('persistBigChat') && config.get('bigChatState')) toggleBigChat(config.get('bigChatState'));
       }
+
+      const chatMessagesElement = document.querySelector(`[class*="${classes.chatMessages}"]`);
+      if (chatMessagesElement) chatMessagesElement.style.padding = '0';
     }, 10);
   }
 
@@ -1791,8 +1800,8 @@
         color: #11f8ff;
       }
 
-      .mTS2-chatters-BigChat {
-        /**/
+      .mTS2-globalMission-BigChat {
+        display: none!important;
       }
 
       .mTS2-chatBox-BigChat-1 {
@@ -1811,11 +1820,12 @@
       }
 
       .mTS2-countdown-BigChat-hide {
-        z-index: -2 !important;
+        display: none!important;
       }
 
       .mTS2-countdown-BigChat-show {
-        z-index: 4 !important;
+        z-index: 10!important;
+        display: flex!important;
       }
 
       .mTS2-chatMessages-BigChat {
@@ -1840,7 +1850,10 @@
 
       .mTS2-xpBar-BigChat-2 {
         z-index: 20 !important;
-        margin-top: 40px !important;
+        position: absolute!important;
+        grid-row: unset !important;
+        bottom: 0!important;
+        margin-bottom: 13px!important;
         width: calc(100% + 170px) !important;
       }
 
@@ -1850,31 +1863,31 @@
 
       .mTS2-topBarTitle-BigChat-1 {
         margin-left: 178px !important;
-        margin-top: 36px !important;
+        margin-top: -16px !important;
         z-index: 22 !important;
       }
 
       .mTS2-topBarTitle-BigChat-2 {
         z-index: 22 !important;
-        margin-top: 21px !important;
+        margin-top: -25px!important;
       }
 
       .mTS2-topBarLogo-BigChat-1 {
-        margin-top: -45px !important;
+        margin-top: 6px !important;
         margin-left: 222px !important;
       }
 
       .mTS2-topBarLogo-BigChat-2 {
-        margin-top: -46px !important;
+        margin-top: -2px !important;
         margin-left: 140px !important;
+      }
+
+      .mTS2-topBarAdmin-BigChat {
+        margin-top: 20px!important;
       }
 
       .mTS2-modalCloseButton {
         min-width: unset !important;
-      }
-
-      .mTS2-globalMission-BigChat {
-        visibility: hidden!important;
       }
 
       .mTS2-denseChat {
@@ -1884,7 +1897,7 @@
       }
 
       .mTS2-denseChat-chatMessageList {
-        gap: 0px !important;
+        gap: 2px !important;
         padding: 5px !important;
       }
 
@@ -1914,7 +1927,7 @@
       }
 
       .mTS2-secondaryPanel-BigChat {
-        z-index: 0 !important;
+        visibility: hidden!important;
       }
 
       #friends_bg_wrapper,
@@ -1992,7 +2005,8 @@
         }
 
         .mTS2-topBarLogo-BigChat-2 {
-          margin-top: -40px !important;
+          bottom: 0!important;
+          margin-bottom: -2px!important;
           margin-left: 212px !important;
         }
 
@@ -2002,8 +2016,10 @@
         }
 
         .mTS2-xpBar-BigChat-1 {
+          position: absolute!important;
+          bottom: 0!important;
+          margin-bottom: -42px!important;
           z-index: 20 !important;
-          margin-top: 41px !important;
           width: calc(100% + 144px) !important;
           margin-left: 0px !important;
         }
@@ -2016,17 +2032,21 @@
         }
 
         .mTS2-xpBar-BigChat-1 {
+          position: absolute!important;
           grid-row: unset !important;
           z-index: 20 !important;
-          margin-top: 598px !important;
+          bottom: 0!important;
+          margin-bottom: 20px!important;
           width: calc(100% + -406px) !important;
           margin-left: 224px !important;
         }
 
         .mTS2-xpBar-BigChat-2 {
+          position: absolute!important;
           grid-row: unset !important;
           z-index: 20 !important;
-          margin-top: 665px !important;
+          bottom: 0!important;
+          margin-bottom: 16px!important;
           width: calc(100% + -406px) !important;
           margin-left: 224px !important;
         }
@@ -2044,6 +2064,19 @@
           grid-row: unset !important;
           width: calc(100% + -387px) !important;
           margin-left: 206px !important;
+        }
+
+        .chat-input_actions__V_ho0 {
+          margin-left: 5px !important;
+        }
+
+      }
+
+      @media screen and (max-width: 500px) {
+
+        .mTS2-xpBar-BigChat-1,
+        .mTS2-xpBar-BigChat-2 {
+          display: none!important;
         }
 
         .chat-input_actions__V_ho0 {
