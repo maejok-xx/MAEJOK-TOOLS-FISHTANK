@@ -319,9 +319,6 @@
     const autoClanChat = createCheckbox('Auto-Join Clan Chat', 'autoClanChat', ['help', ' ? ', 'Automatically joins your clan\'s chat upon page load']);
     tabMain.appendChild(autoClanChat);
 
-    const extendChat = createCheckbox('Extend Chat History', 'extendChat', ['prompt', 'Limit', 'Number of messages to keep in history (Minimum/Default: 100)', 'chatHistoryLimit', '']);
-    tabMain.appendChild(extendChat);
-
 
     //hiders
     const disableTimestamps = createCheckbox('Hide Timestamps', 'disableTimestamps', ['help', ' ? ', 'Hides timestamps in chat']);
@@ -1460,7 +1457,6 @@
         v: 1
       },
       agreementAccepted: false,
-      extendChat: false,
     };
     const internalSettings = {
       waitElement: classes.chatBox
