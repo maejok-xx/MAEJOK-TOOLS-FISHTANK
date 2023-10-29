@@ -1038,7 +1038,6 @@
     handleUserCardButtonEvent(event);
     handleNameTaggingEvent(event);
     handleCloseChattersList(event);
-    if (hasClass(event.target, classes.chatAutoScroll)) { scrollToBottom(); playSound('tick-short'); }
   }
 
   function handleDblClick(event) {
@@ -1237,6 +1236,24 @@
     }, 5);
   }
 
+  function getTextContent(selector) {
+    return new Promise((resolve, reject) => {
+      let count = 0;
+      const duration = 15 * 1000;
+      const interval = setInterval(() => {
+        const element = document.querySelector(`[class*="${selector}"]`).textContent;
+        if (element) {
+          clearInterval(interval);
+          resolve(element);
+        } else if (count * 5 >= duration) {
+          clearInterval(interval);
+          reject(new Error('Element not found within the specified duration'));
+        }
+        count += 5;
+      }, 5);
+    });
+  }
+
 
   // UPDATE
   let updateCheckIntervalId = null;
@@ -1309,6 +1326,22 @@
     chatMessageDiv.appendChild(innerDiv);
     chat.appendChild(chatMessageDiv);
     scrollToBottom();
+  }
+
+  function insertChatNotice(html, selfDestruct = false, id = null){
+    const chat = document.querySelector(`[class^="${classes.chatMessages}"]`)
+    const messages = document.querySelector(`[class^="${classes.chatMessageList}"]`)
+    const chatMessageDiv = document.createElement('div');
+    chatMessageDiv.className = 'chat_scroll__6Tqdf';
+    chatMessageDiv.id = id;
+    chatMessageDiv.innerHTML = html;
+    messages.appendChild(chatMessageDiv);
+    chat.insertAdjacentElement('afterend',chatMessageDiv);
+    if (selfDestruct) {
+      setTimeout(function (){
+        chatMessageDiv.remove();
+      }, selfDestruct === true ? 10*1000 : selfDestruct * 1000)
+    }
   }
 
   function insertChangelog() {
@@ -1393,10 +1426,16 @@
           if (mentions.length !== 0) {
             let tags = [];
             mentions.forEach(mention => {
-              const mentionedUsername = mention.textContent.replace('@', '').toLowerCase();
-              tags.push(mentionedUsername);
+              const mentionedUsername = mention.textContent.replace('@', '');
+              tags.push(mentionedUsername.toLowerCase());
               mention.style.cursor = "pointer";
-              mention.addEventListener('click', ()=> addMentionedHighlight(mentionedUsername));
+              mention.addEventListener('click', ()=> addMentionedHighlight(mentionedUsername.toLowerCase()));
+
+              if (mentionedUsername.toLowerCase() == my.name.toLowerCase()) {
+                const message = addedNode.querySelector(`[class*="${classes.chatMessage}"]`).textContent;
+                const sender = addedNode.querySelector(`[class*="${classes.chatUsername}"]`).textContent;
+                console.log(sender, message);
+              }
             });
 
             addedNode.dataset.tags = tags;
@@ -1487,6 +1526,91 @@
   }
 
 
+  function initChatCommands(){
+    const chatInput = document.querySelector(`[class^="${classes.chatInput}"]`);
+    chatInput.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        const text = chatInput.textContent;
+        if (text.startsWith('/')) {
+          executeCommand(text.substring(1), event);
+        }
+      }
+    });
+  }
+
+  function startAway(){
+    insertChatNotice(`Away Logger: ON`, false, 'meajok-away-on');
+    console.log('Started listening for messages');
+  }
+
+  function stopAway(){
+    document.getElementById(`meajok-away-on`).remove();
+    insertChatNotice(`Away Logger: OFF`, 3, 'meajok-away-off');
+    console.log('Away logger started...');
+  }
+
+
+  // const initAway = () => {
+  //   const state = {
+  //     active: false,
+  //     log: [],
+  //     started: null
+  //   }
+
+  //   const start = () => {
+  //     insertChatNotice(`Away Logger: ON`, false, 'meajok-away-on');
+  //     console.log('Started listening for messages');
+  //   }
+
+  //   const stop = () => {
+  //     document.getElementById(`meajok-away-on`).remove();
+  //     insertChatNotice(`Away Logger: OFF`, 3, 'meajok-away-off');
+  //     console.log('Away logger started...');
+  //   }
+
+  //   const show = () => {
+  //     console.log('show away log');
+  //   }
+
+  //   const get = (key) => { return state[key]; }
+
+  //   const set = (key, value) => { if (settings.hasOwnProperty(key)) { settings[key] = value; }};
+
+  //   return [ get, set, start, stop, show ]
+  // }
+
+  // const away = initAway();
+
+  function executeCommand(command, event) {
+    let updateInput = new KeyboardEvent('input', { bubbles: true });
+    const chatInput = document.querySelector(`[class^="${classes.chatInput}"]`);
+    const commandsList = [
+      { 'away': startAway },
+      { 'back': stopAway },
+      // { 'log': away.show }
+    ];
+    const [cmd, ...args] = command.split(' ');
+    const foundCommand = commandsList.find(item => Object.keys(item)[0] === cmd);
+    if (foundCommand) {
+      foundCommand[cmd]();
+      event.preventDefault();
+      event.stopPropagation();
+      chatInput.textContent = '';
+      chatInput.dispatchEvent(updateInput)
+    } else {
+      console.log('Command not found:', cmd);
+    }
+  }
+
+
+
+
+
+
+
+
+
+
   // INITIALIZATIONS
   const settingsTitle = 'MAEJOK-TOOLS SETTINGS';
   const initConfig = () => {
@@ -1494,6 +1618,7 @@
       // default settings, overwritten after saving once.
       enableUpdateChecks: true,
       updateCheckFrequency: 30,
+      enableAwayMode: true,
       enableBigChat: true,
       persistBigChat: true,
       bigChatState: false,
@@ -1521,16 +1646,16 @@
         v: 1
       },
       agreementAccepted: false,
-    };
+    }
     const internalSettings = {
       waitElement: classes.chatBox
     }
 
-    const get = (key) => { return settings[key]; };
+    const get = (key) => { return settings[key]; }
 
-    const internal = (key) => { return internalSettings[key]; };
+    const internal = (key) => { return internalSettings[key]; }
 
-    const set = (key, value) => { if (settings.hasOwnProperty(key)) { settings[key] = value; }};
+    const set = (key, value) => { if (settings.hasOwnProperty(key)) { settings[key] = value; }}
 
     const load = () => {
       const storedSettings = JSON.parse(localStorage.getItem('s2_maejoktools-settings'));
@@ -1545,7 +1670,7 @@
       lists.friends = storedSettings.friends;
       lists.watching = storedSettings.highlighted;
       lists.colors = storedSettings.colors;
-    };
+    }
 
     const save = () => {
       const storedSettings = {};
@@ -1553,7 +1678,7 @@
         if (settings.hasOwnProperty(key)) { storedSettings[key] = settings[key]; }
       }
       localStorage.setItem('s2_maejoktools-settings', JSON.stringify(storedSettings));
-    };
+    }
 
     return { get, internal, set, load, save };
   };
@@ -1570,10 +1695,16 @@
         clearInterval(initWait);
         isPageLoaded = true;
 
-        const displayNameElement = document.querySelector(`[class*="${classes.topBarDisplayName}"]`);
-        const clanNameElement = document.querySelector(`[class*="${classes.topBarClan}"]`);
-        my.name = displayNameElement.textContent;
-        my.clan = clanNameElement.textContent;
+        getTextContent(classes.topBarDisplayName)
+          .then(textContent => my.name = textContent)
+          .catch(error => console.error(error));
+
+        getTextContent(classes.topBarClan)
+          .then(textContent => {
+              my.clan = textContent;
+              joinClanChat();
+            })
+          .catch(error => console.error(error));
 
         document.addEventListener('keydown', handleKeyPress);
         document.addEventListener('click', handleMouseClick);
@@ -1581,8 +1712,8 @@
 
         initChatMutationObserver();
         createSettingsButton();
-        joinClanChat();
         initRecentChatters();
+        initChatCommands();
 
         console.log('MAEJOK-TOOLS :: Running');
         startUpdateChecker();

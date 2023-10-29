@@ -10,7 +10,6 @@ Current Features:
 - Active Chatters Count/List (click count to see list)
 - Dense Chat mode
 - Click Avatars/Usernames to tag users
-- Quick Scroll to bottom (click "Auto-scroll off")
 - Toggle in Chat: Timestamps/Avatars/Clans/XP/Emotes/Consumables/System Messages & Medals
 - And it's all controllable via Integrated Settings Panel
 - ContextHelper9000 (click any @User_Mention and all their  messages [if any] will be highlighted in purple. To remove, click any other one of their mentions or one of their messages.)

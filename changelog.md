@@ -1,5 +1,22 @@
 # MAEJOK-TOOLS CHANGE LOG
 
+# ***v2.4.10***
+### Notes
+ - Quick Scroll to bottom is now a native feature.
+
+### Bug Fixes
+ - N/A
+
+### Features Added
+ - N/A
+
+ ### Removed
+ - Quick Scroll to bottom
+
+
+---
+
+
 # ***v2.4.9***
 ### Notes
  - To use ContextHelper9000: click any @User_Mention and all their  messages (if any) will be highlighted in purple. To remove, click any other one of their mentions or one of their messages.
