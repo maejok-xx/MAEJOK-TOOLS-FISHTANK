@@ -4,8 +4,8 @@
 
 ### Notes
 
-- Quick Scroll to bottom is now a native Fishtank feature.
-- Updated some formatting stuff
+- Quick Scroll to bottom and name click tagging are now native Fishtank features.
+- Updated some formatting
 
 ### Bug Fixes
 
@@ -18,6 +18,7 @@
 ### Removed
 
 - Quick Scroll to bottom
+- Name-click Tagging
 
 ---
 

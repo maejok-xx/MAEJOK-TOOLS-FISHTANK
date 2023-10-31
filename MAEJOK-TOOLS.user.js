@@ -381,12 +381,12 @@
     );
     tabMain.appendChild(enableAvatarTagging);
 
-    const enableNameTagging = createCheckbox(
-      "Username Click-To-Tag",
-      "enableNameTagging",
-      ["help", " ? ", "Tags chat sender when you click their avatar"]
-    );
-    tabMain.appendChild(enableNameTagging);
+    // const enableNameTagging = createCheckbox(
+    //   "Username Click-To-Tag",
+    //   "enableNameTagging",
+    //   ["help", " ? ", "Tags chat sender when you click their avatar"]
+    // );
+    // tabMain.appendChild(enableNameTagging);
 
     const enableDenseChat = createCheckbox(
       "Enable Dense Chat",
@@ -1400,10 +1400,10 @@
       if (clan) username = username.replace(/<span[^>]*>.*?<\/span>/, "");
     }
     // get name from username
-    else if (isChatUsername && config.get("enableNameTagging")) {
-      chatNameEl = event.target;
-      username = chatNameEl.lastChild.textContent;
-    }
+    // else if (isChatUsername && config.get("enableNameTagging")) {
+    //   chatNameEl = event.target;
+    //   username = chatNameEl.lastChild.textContent;
+    // }
     // give up if no username
     if (!username) return;
     // insert tag
@@ -2049,7 +2049,7 @@
       persistBigChat: true,
       bigChatState: false,
       showTimerBigChat: false,
-      enableNameTagging: true,
+      // enableNameTagging: true,
       enableAvatarTagging: true,
       disableTimestamps: true,
       enableDenseChat: false,
