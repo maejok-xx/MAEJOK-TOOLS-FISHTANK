@@ -1,9 +1,10 @@
 # MAEJOK-TOOLS CHANGE LOG
 
-# **_v2.4.10_**
+# **_v2.4.10_**/v2.5.0
 
 ### Notes
 
+- jumping v2.5.0 because of issue with update/versioning system that I'll fix later
 - Quick Scroll to bottom and name click tagging are now native Fishtank features.
 - Updated some formatting
 
