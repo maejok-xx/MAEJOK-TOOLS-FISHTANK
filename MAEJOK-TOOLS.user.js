@@ -2,7 +2,7 @@
 // @name         MAEJOK-TOOLS for Fishtank.live
 // @description  Tools for Fishtank.live Season 2!
 // @author       maejok-xx
-// @version      2.5.0
+// @version      2.5.1
 // @license      GNU GPLv3
 // @homepageURL  https://github.com/maejok-xx/MAEJOK-TOOLS-FISHTANK
 // @namespace    https://greasyfork.org/en/scripts/465416-maejok-tools-for-fishtank-live
@@ -1596,7 +1596,7 @@
       const interval = setInterval(() => {
         const element = document.querySelector(
           `[class*="${selector}"]`
-        ).textContent;
+        )?.textContent;
         if (element) {
           clearInterval(interval);
           resolve(element);
@@ -2146,12 +2146,10 @@
           .then((textContent) => (my.name = textContent))
           .catch((error) => console.error(error));
 
-        getTextContent(classes.topBarClan)
-          .then((textContent) => {
-            my.clan = textContent;
-            joinClanChat();
-          })
-          .catch((error) => console.error(error));
+        getTextContent(classes.topBarClan).then((textContent) => {
+          my.clan = textContent;
+          joinClanChat();
+        });
 
         document.addEventListener("keydown", handleKeyPress);
         document.addEventListener("click", handleMouseClick);

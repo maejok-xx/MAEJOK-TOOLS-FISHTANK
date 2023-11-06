@@ -1,5 +1,25 @@
 # MAEJOK-TOOLS CHANGE LOG
 
+# **_v2.5.1_**
+
+### Notes
+
+- Just a big fix
+
+### Bug Fixes
+
+- fix console spam/tab freeze if clanless
+
+### Features Added
+
+- N/A
+
+### Removed
+
+- N/A
+
+---
+
 # **_v2.4.10_**/v2.5.0
 
 ### Notes
