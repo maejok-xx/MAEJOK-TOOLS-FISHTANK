@@ -1,10 +1,10 @@
 # MAEJOK-TOOLS CHANGE LOG
 
-# **_v2.5.1_**
+# **_v2.6.0_**
 
 ### Notes
 
-- Just a big fix
+- Something is going on with updater, don't care to figure it out since I'm rewriting this whole thing anyway, so versioning is not correct. Don't worry about it.
 
 ### Bug Fixes
 

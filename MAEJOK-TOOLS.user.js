@@ -2,7 +2,7 @@
 // @name         MAEJOK-TOOLS for Fishtank.live
 // @description  Tools for Fishtank.live Season 2!
 // @author       maejok-xx
-// @version      2.5.1
+// @version      2.6.0
 // @license      GNU GPLv3
 // @homepageURL  https://github.com/maejok-xx/MAEJOK-TOOLS-FISHTANK
 // @namespace    https://greasyfork.org/en/scripts/465416-maejok-tools-for-fishtank-live
@@ -2023,18 +2023,6 @@
       childList: true,
       subtree: false,
       attributeOldValue: false,
-    });
-  }
-
-  function initChatCommands() {
-    const chatInput = document.querySelector(`[class^="${classes.chatInput}"]`);
-    chatInput.addEventListener("keydown", function (event) {
-      if (event.key === "Enter") {
-        const text = chatInput.textContent;
-        if (text.startsWith("/")) {
-          executeCommand(text.substring(1), event);
-        }
-      }
     });
   }
 
