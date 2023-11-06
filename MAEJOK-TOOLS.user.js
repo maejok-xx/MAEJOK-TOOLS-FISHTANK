@@ -2146,7 +2146,6 @@
         initChatMutationObserver();
         createSettingsButton();
         initRecentChatters();
-        initChatCommands();
 
         console.log("MAEJOK-TOOLS :: Running");
         startUpdateChecker();
